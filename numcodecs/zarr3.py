@@ -80,7 +80,7 @@ def _parse_codec_configuration(data: dict[str, JSON]) -> dict[str, JSON]:
 @dataclass(frozen=True)
 class _NumcodecsCodec(Metadata):
     codec_name: str
-    codec_config: ConfigDict
+    codec_config: ConfigDict[Any]
 
     def __init__(self, **codec_config: JSON) -> None:
         if not self.codec_name:

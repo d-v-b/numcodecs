@@ -45,7 +45,7 @@ cdef uint32_t _fletcher32(const uint8_t[::1] _data):
     return (sum2 << 16) | sum1
 
 
-class Fletcher32(Codec):
+class Fletcher32(Codec[Literal["fletcher32"]]):
     """The fletcher checksum with 16-bit words and 32-bit output
 
     This is the netCDF4/HED5 implementation, which is not equivalent
@@ -57,8 +57,6 @@ class Fletcher32(Codec):
     the data portion and compared with the four-byte checksum, raising
     RuntimeError if inconsistent.
     """
-
-    codec_id = "fletcher32"
 
     def encode(self, buf):
         """Return buffer plus 4-byte fletcher checksum"""

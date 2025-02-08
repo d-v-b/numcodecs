@@ -1,9 +1,9 @@
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar, Literal, TypedDict
 
 import numpy as np
 from typing_extensions import Buffer
 
-from .abc import Codec
+from .abc import Codec, ConfigDict
 from .compat import ensure_ndarray_like, ndarray_copy
 
 # The size in bits of the mantissa/significand for the various floating types
@@ -15,8 +15,11 @@ max_bits = {
     "float64": 52,
 }
 
+class BitRoundConfig(ConfigDict[Literal['bitround']]):
+    keepbits: int
 
-class BitRound(Codec):
+
+class BitRound(Codec[Literal['bitround']]):
     """Floating-point bit rounding codec
 
     Drops a specified number of bits from the floating point mantissa,
@@ -38,7 +41,6 @@ class BitRound(Codec):
         to no transform.
     """
 
-    codec_id: ClassVar[Literal['bitround']] = 'bitround'
     keepbits: int
 
     def __init__(self, keepbits: int):

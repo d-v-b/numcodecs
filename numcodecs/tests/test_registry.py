@@ -1,4 +1,5 @@
 import inspect
+from typing import Literal
 
 import pytest
 
@@ -15,7 +16,7 @@ def test_registry_errors() -> None:
 
 def test_get_codec_argument() -> None:
     # Check that get_codec doesn't modify its argument.
-    arg: ConfigDict = {"id": "json2"}
+    arg: ConfigDict[Literal['json2']] = {"id": "json2"}
     before = dict(arg)
     get_codec(arg)
     assert before == arg

@@ -187,7 +187,7 @@ def decompress(source, dest=None):
 
 
 
-class LZ4(Codec):
+class LZ4(Codec[Literal['lz4']]):
     """Codec providing compression using LZ4.
 
     Parameters
@@ -202,7 +202,6 @@ class LZ4(Codec):
 
     """
 
-    codec_id = 'lz4'
     max_buffer_size = 0x7E000000
 
     def __init__(self, acceleration=DEFAULT_ACCELERATION):

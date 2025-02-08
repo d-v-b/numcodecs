@@ -6,20 +6,19 @@ from numcodecs.ndarray_like import NDArrayLike
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from typing_extensions import Buffer, ReadOnly
+    from typing_extensions import Buffer
 import numpy as np
 
 from .abc import Codec, ConfigDict
 from .compat import ensure_ndarray, ndarray_copy
 
 
-class AstypeConfig(ConfigDict):
-    id: ReadOnly[Literal['astype']]
+class AstypeConfig(ConfigDict[Literal['astype']]):
     encode_dtype: str
     decode_dtype: str
 
 
-class AsType(Codec):
+class AsType(Codec[Literal['astype']]):
     """Filter to convert data between different types.
 
     Parameters
@@ -53,11 +52,10 @@ class AsType(Codec):
 
     """
 
-    codec_id: ClassVar[Literal['astype']] = 'astype'
     encode_dtype: np.dtype[Any]
     decode_dtype: np.dtype[Any]
 
-    def __init__(self, encode_dtype: npt.DtTypeLike, decode_dtype: npt.DTypeLike) -> None:
+    def __init__(self, encode_dtype: npt.DTypeLike, decode_dtype: npt.DTypeLike) -> None:
         self.encode_dtype = np.dtype(encode_dtype)
         self.decode_dtype = np.dtype(decode_dtype)
 

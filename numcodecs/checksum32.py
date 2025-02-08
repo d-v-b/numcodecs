@@ -9,7 +9,7 @@ import numpy as np
 
 from .abc import Codec
 from .compat import ensure_contiguous_ndarray, ndarray_copy
-from .jenkins import jenkins_lookup3 # type: ignore[import-untyped]
+from .jenkins import jenkins_lookup3  # type: ignore[import-untyped]
 
 _crc32c: Optional[ModuleType] = None
 with suppress(ImportError):
@@ -21,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
 CHECKSUM_LOCATION = Literal['start', 'end']
 
 
-class Checksum32(Codec):
+class Checksum32(Codec[str]):
     # override in sub-class
     checksum: ClassVar[Callable[[Buffer], int]]
     location: CHECKSUM_LOCATION = 'start'
@@ -167,5 +167,5 @@ if _crc32c:
         """
 
         codec_id: ClassVar[Literal['crc32c']] = 'crc32c'
-        checksum: Classvar[Callable[[Buffer, int, int], int]] = _crc32c.crc32c  # type: ignore[name-defined]
+        checksum: ClassVar[Callable[[Buffer, int, int], int]] = _crc32c.crc32c  # type: ignore[name-defined]
         location: CHECKSUM_LOCATION = 'end'

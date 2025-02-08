@@ -8,12 +8,11 @@ from .abc import Codec, ConfigDict
 from .compat import ensure_contiguous_ndarray
 
 
-class PickleConfig(ConfigDict):
-    id: Literal['pickle']
+class PickleConfig(ConfigDict[Literal['pickle']]):
     protocol: int
 
 
-class Pickle(Codec):
+class Pickle(Codec[Literal['pickle']]):
     """Codec to encode data as as pickled bytes. Useful for encoding an array of Python string
     objects.
 
@@ -36,8 +35,6 @@ class Pickle(Codec):
     numcodecs.msgpacks.MsgPack
 
     """
-
-    codec_id: ClassVar[Literal['pickle']] = 'pickle'
     protocol: int
 
     def __init__(self, protocol: int = pickle.HIGHEST_PROTOCOL) -> None:

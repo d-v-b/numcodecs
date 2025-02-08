@@ -18,7 +18,7 @@ if _lzma:
     from .compat import ensure_contiguous_ndarray, ndarray_copy
 
     # noinspection PyShadowingBuiltins
-    class LZMA(Codec):
+    class LZMA(Codec[Literal['lzma']]):
         """Codec providing compression using lzma via the Python standard
         library.
 
@@ -37,7 +37,6 @@ if _lzma:
 
         """
 
-        codec_id: ClassVar[Literal['lzma']] = 'lzma'
         format: int
         check: int
         preset: int | None

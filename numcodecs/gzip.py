@@ -4,11 +4,15 @@ from typing import ClassVar, Literal
 
 from typing_extensions import Buffer
 
-from .abc import Codec
+from .abc import Codec, ConfigDict
 from .compat import ensure_bytes, ensure_contiguous_ndarray
 
 
-class GZip(Codec):
+class GZipConfig(ConfigDict[Literal['gzip']]):
+    level: int
+
+
+class GZip(Codec[Literal['gzip']]):
     """Codec providing gzip compression using zlib via the Python standard library.
 
     Parameters
@@ -18,10 +22,9 @@ class GZip(Codec):
 
     """
 
-    codec_id: ClassVar[Literal['gzip']] = 'gzip'
     level: int
 
-    def __init__(self, level: int = 1):
+    def __init__(self, level: int = 1) -> None:
         self.level = level
 
     def encode(self, buf: Buffer) -> bytes:
@@ -39,10 +42,10 @@ class GZip(Codec):
         # normalise inputs
         # BytesIO only copies if the data is not of `bytes` type.
         # This allows `bytes` objects to pass through without copying.
-        buf = io.BytesIO(ensure_bytes(buf))
+        buf_bytes = io.BytesIO(ensure_bytes(buf))
 
         # do decompression
-        with _gzip.GzipFile(fileobj=buf, mode='rb') as decompressor:
+        with _gzip.GzipFile(fileobj=buf_bytes, mode='rb') as decompressor:
             if out is not None:
                 out_view = ensure_contiguous_ndarray(out)
                 decompressor.readinto(out_view)

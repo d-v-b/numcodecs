@@ -1,7 +1,5 @@
 from typing import Any, ClassVar, Literal, Protocol, runtime_checkable
 
-import numpy as np
-
 
 class _CachedProtocolMeta(Protocol.__class__):  # type: ignore[name-defined]
     """Custom implementation of @runtime_checkable
@@ -15,7 +13,7 @@ class _CachedProtocolMeta(Protocol.__class__):  # type: ignore[name-defined]
 
     _instancecheck_cache: ClassVar[dict[tuple[type, type], bool]] = {}
 
-    def __instancecheck__(self, instance):
+    def __instancecheck__(self, instance: object) -> bool:
         key = (self, instance.__class__)
         ret = self._instancecheck_cache.get(key)
         if ret is None:
@@ -29,6 +27,7 @@ class DType(Protocol, metaclass=_CachedProtocolMeta):
     itemsize: int
     name: str
     kind: str
+    str: str
 
 
 @runtime_checkable
@@ -51,9 +50,9 @@ class NDArrayLike(Protocol, metaclass=_CachedProtocolMeta):
 
     def __len__(self) -> int: ...  # pragma: no cover
 
-    def __getitem__(self, key) -> Any: ...  # pragma: no cover
+    def __getitem__(self, key: Any) -> Any: ...  # pragma: no cover
 
-    def __setitem__(self, key, value): ...  # pragma: no cover
+    def __setitem__(self, key: Any, value: Any) -> None: ...  # pragma: no cover
 
     def tobytes(self, order: str | None = ...) -> bytes: ...  # pragma: no cover
 

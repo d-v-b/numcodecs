@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 from typing_extensions import Buffer
@@ -8,7 +8,7 @@ from .abc import Codec
 from .compat import ensure_contiguous_ndarray
 
 
-class Shuffle(Codec):
+class Shuffle(Codec[Literal['shuffle']]):
     """Codec providing shuffle
 
     Parameters
@@ -17,8 +17,6 @@ class Shuffle(Codec):
         Size in bytes of the array elements.  Default = 4
 
     """
-
-    codec_id = 'shuffle'
     elementsize: int
 
     def __init__(self, elementsize: int = 4) -> None:

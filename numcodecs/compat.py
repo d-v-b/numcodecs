@@ -1,6 +1,6 @@
 import array
 import codecs
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 from typing_extensions import Buffer
@@ -180,34 +180,36 @@ def ensure_text(s: Buffer | str, encoding: str = "utf-8") -> str:
     return s
 
 
-def ndarray_copy(src: Buffer, dst: Buffer | None) -> NDArrayLike:
+def ndarray_copy(src: NDArrayLike, dst: NDArrayLike | None) -> NDArrayLike:
     """Copy the contents of the array from `src` to `dst`."""
 
     if dst is None:
         # no-op
-        return src
+        return ensure_contiguous_ndarray_like(src)
 
     # ensure ndarray like
     src_arr = ensure_ndarray_like(src)
     dst_arr = ensure_ndarray_like(dst)
-
+    order: Literal['C', 'F', 'A']
     # flatten source array
     src_flat = src_arr.reshape(-1, order="A")
 
     # ensure same data type
-    if dst_arr.dtype != object:
+    if str(dst_arr.dtype) != 'object':
         src_astype = src_flat.view(dst.dtype)
     else:
         src_astype = src_flat
     # reshape source to match destination
-    if src_flat.shape != dst_arr.shape:
+    if src_astype.shape != dst_arr.shape:
         if dst_arr.flags.f_contiguous:
             order = "F"
         else:
             order = "C"
-        src_reshaped = src_flat.reshape(dst_arr.shape, order=order)
-
+        src_reshaped = src_astype.reshape(dst_arr.shape, order=order)
+    else:
+        src_reshaped = src_astype
     # copy via numpy
-    np.copyto(dst_arr, src_arr)
+
+    np.copyto(dst_arr, src_reshaped)
 
     return dst_arr

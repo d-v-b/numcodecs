@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import numpy as np
 
@@ -14,7 +14,13 @@ from .abc import Codec, ConfigDict
 from .compat import ensure_ndarray, ensure_text, ndarray_copy
 
 
-class Categorize(Codec):
+class CategorizeConfig(ConfigDict[Literal['categorize']]):
+    labels: list[str]
+    dtype: str
+    astype: str
+
+
+class Categorize(Codec[Literal['categorize']]):
     """Filter encoding categorical string data as integers.
 
     Parameters
@@ -44,8 +50,6 @@ class Categorize(Codec):
           dtype=object)
 
     """
-
-    codec_id = 'categorize'
     labels: list[str]
     dtype: np.dtype[Any]
     astype: np.dtype[Any]
@@ -97,7 +101,7 @@ class Categorize(Codec):
         # handle output
         return ndarray_copy(dec, out)
 
-    def get_config(self) -> ConfigDict:
+    def get_config(self) -> CategorizeConfig:
         return {
             'id': self.codec_id,
             'labels': self.labels,

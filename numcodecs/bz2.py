@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 import bz2 as _bz2
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 if TYPE_CHECKING:
     from typing_extensions import Buffer
 
-from numcodecs.abc import Codec
+from numcodecs.abc import Codec, ConfigDict
 from numcodecs.compat import ensure_contiguous_ndarray, ndarray_copy
 
+class BZ2Config(ConfigDict[Literal['bz2']]):
+    level: int
 
-class BZ2(Codec):
+class BZ2(Codec[Literal['bz2']]):
     """Codec providing compression using bzip2 via the Python standard library.
 
     Parameters
@@ -19,8 +21,6 @@ class BZ2(Codec):
         Compression level.
 
     """
-
-    codec_id = 'bz2'
     level: int
 
     def __init__(self, level: int = 1) -> None:

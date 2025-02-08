@@ -535,7 +535,7 @@ def _get_use_threads():
 _shuffle_repr = ['AUTOSHUFFLE', 'NOSHUFFLE', 'SHUFFLE', 'BITSHUFFLE']
 
 
-class Blosc(Codec):
+class Blosc(Codec[Literal['blosc']]):
     """Codec providing compression using the Blosc meta-compressor.
 
     Parameters
@@ -559,12 +559,12 @@ class Blosc(Codec):
 
     """
 
-    codec_id = 'blosc'
+    codec_id:ClassVar[Literal['blosc']] = 'blosc'
     NOSHUFFLE = NOSHUFFLE
     SHUFFLE = SHUFFLE
     BITSHUFFLE = BITSHUFFLE
     AUTOSHUFFLE = AUTOSHUFFLE
-    max_buffer_size = 2**31 - 1
+    max_buffer_size: int = 2**31 - 1
 
     def __init__(self, cname='lz4', clevel=5, shuffle=SHUFFLE, blocksize=AUTOBLOCKS):
         self.cname = cname

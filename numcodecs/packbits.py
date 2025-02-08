@@ -1,10 +1,12 @@
+from typing import ClassVar, Literal
+from typing_extensions import Buffer
 import numpy as np
 
 from .abc import Codec
 from .compat import ensure_ndarray, ndarray_copy
 
 
-class PackBits(Codec):
+class PackBits(Codec[Literal['packbits']]):
     """Codec to pack elements of a boolean array into bits in a uint8 array.
 
     Examples
@@ -26,10 +28,7 @@ class PackBits(Codec):
     were padded to complete the final byte.
 
     """
-
-    codec_id = 'packbits'
-
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> Buffer:
         # normalise input
         arr = ensure_ndarray(buf).view(bool)
 
@@ -58,7 +57,7 @@ class PackBits(Codec):
 
         return enc
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None=None) -> Buffer:
         # normalise input
         enc = ensure_ndarray(buf).view('u1')
 

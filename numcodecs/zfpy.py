@@ -35,7 +35,7 @@ if has_zfpy:
     from .compat import ensure_bytes, ensure_contiguous_ndarray, ndarray_copy
 
     # noinspection PyShadowingBuiltins
-    class ZFPY(Codec):
+    class ZFPY(Codec[Literal['zfpy']]):
         """Codec providing compression using zfpy via the Python standard
         library.
 
@@ -52,7 +52,6 @@ if has_zfpy:
 
         """
 
-        codec_id: ClassVar[Literal['zfpy']] = "zfpy"
         mode: str
         tolerance: int
         rate: int

@@ -13,15 +13,14 @@ from .abc import Codec, ConfigDict
 from .compat import ensure_ndarray, ndarray_copy
 
 
-class ScaleOffsetConfig(ConfigDict):
-    id: Literal['scaleoffset']
+class ScaleOffsetConfig(ConfigDict[Literal['fixedscaleoffset']]):
     scale: float
     offset: float
     dtype: str
     astype: str
 
 
-class FixedScaleOffset(Codec):
+class FixedScaleOffset(Codec[Literal['fixedscaleoffset']]):
     """Simplified version of the scale-offset filter available in HDF5.
     Applies the transformation `(x - offset) * scale` to all chunks. Results
     are rounded to the nearest integer but are not packed according to the
@@ -83,8 +82,6 @@ class FixedScaleOffset(Codec):
     numcodecs.quantize.Quantize
 
     """
-
-    codec_id: ClassVar[Literal['fixedscaleoffset']] = 'fixedscaleoffset'
     offset: float
     scale: float
     dtype: np.dtype[Any]

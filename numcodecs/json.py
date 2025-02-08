@@ -9,7 +9,19 @@ from .abc import Codec, ConfigDict
 from .compat import ensure_text
 
 
-class JSON(Codec):
+class JSONConfig(ConfigDict[Literal['json2']]):
+    encoding: str
+    skipkeys: bool
+    ensure_ascii: bool
+    check_circular: bool
+    allow_nan: bool
+    sort_keys: bool
+    indent: int | None
+    separators: tuple[str, str] | None
+    strict: bool
+
+
+class JSON(Codec[Literal['json2']]):
     """Codec to encode data as JSON. Useful for encoding an array of Python objects.
 
     .. versionchanged:: 0.6
@@ -30,12 +42,15 @@ class JSON(Codec):
     numcodecs.pickles.Pickle, numcodecs.msgpacks.MsgPack
 
     """
-
-    codec_id: ClassVar[Literal['json2']] = 'json2'
     _text_encoding: str
-    _encoder_config: dict[str, bool | int | str | tuple[str, ...]]
+    skipkeys: bool
+    strict: bool
+    ensure_ascii: bool
+    check_circular: bool
+    allow_nan: bool
+    sort_keys: bool
+    separators: tuple[str, str] | None
     _encoder: _json.JSONEncoder
-    _decoder_config: dict[str, bool]
 
     def __init__(
         self,
@@ -46,7 +61,7 @@ class JSON(Codec):
         allow_nan: bool = True,
         sort_keys: bool = True,
         indent: int | None = None,
-        separators: tuple[str, ...] | None = None,
+        separators: tuple[str, str] | None = None,
         strict: bool = True,
     ):
         self._text_encoding = encoding
@@ -57,19 +72,25 @@ class JSON(Codec):
                 separators = ',', ':'
             else:
                 separators = ', ', ': '
-        separators = tuple(separators)
-        self._encoder_config = {
-            'skipkeys': skipkeys,
-            'ensure_ascii': ensure_ascii,
-            'check_circular': check_circular,
-            'allow_nan': allow_nan,
-            'indent': indent,
-            'separators': separators,
-            'sort_keys': sort_keys,
-        }
-        self._encoder = _json.JSONEncoder(**self._encoder_config)  # type: ignore[arg-type]
-        self._decoder_config = {'strict': strict}
-        self._decoder = _json.JSONDecoder(**self._decoder_config)  # type: ignore[arg-type]
+
+        self.skipkeys = skipkeys
+        self.ensure_ascii = ensure_ascii
+        self.check_circular = check_circular
+        self.allow_nan = allow_nan
+        self.indent = indent
+        self.separators = separators
+        self.strict = strict
+        self.sort_keys = sort_keys
+        self._encoder = _json.JSONEncoder(
+            separators=self.separators,
+            skipkeys=self.skipkeys,
+            ensure_ascii=self.ensure_ascii,
+            check_circular=self.check_circular,
+            allow_nan=self.allow_nan,
+            sort_keys=self.sort_keys,
+            indent=self.indent,
+        )
+        self._decoder = _json.JSONDecoder(strict=self.strict)
 
     def encode(self, buf: Buffer) -> bytes:
         try:
@@ -94,20 +115,30 @@ class JSON(Codec):
         else:
             return dec
 
-    def get_config(self) -> ConfigDict:
-        config = {'id': self.codec_id, 'encoding': self._text_encoding}
-        config.update(self._encoder_config)
-        config.update(self._decoder_config)
+    def get_config(self) -> JSONConfig:
+        config: JSONConfig = {
+            'id': self.codec_id,
+            'encoding': self._text_encoding,
+            'skipkeys': self.skipkeys,
+            'ensure_ascii': self.ensure_ascii,
+            'check_circular': self.check_circular,
+            'allow_nan': self.allow_nan,
+            'sort_keys': self.sort_keys,
+            'indent': self.indent,
+            'separators': self.separators,
+            'strict': self.strict,
+        }
         return config
 
     def __repr__(self) -> str:
         params = [f'encoding={self._text_encoding!r}']
-        for k, v in sorted(self._encoder_config.items()):
-            params.append(f'{k}={v!r}')
-        for k, v in sorted(self._decoder_config.items()):
+        for k, v in sorted(self.__dict__.items()):
             params.append(f'{k}={v!r}')
         classname = type(self).__name__
-        params = ', '.join(params)
+        params_joined = ', '.join(params)
         return textwrap.fill(
-            f'{classname}({params})', width=80, break_long_words=False, subsequent_indent='     '
+            f'{classname}({params_joined})',
+            width=80,
+            break_long_words=False,
+            subsequent_indent='     ',
         )

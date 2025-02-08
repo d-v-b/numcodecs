@@ -149,7 +149,7 @@ def test_crc32c_checksum() -> None:
 
 
 @pytest.mark.parametrize("codec", codecs)
-def test_err_checksum(codec: Codec) -> None:
+def test_err_checksum(codec: Codec[Any]) -> None:
     arr = np.arange(0, 64, dtype="uint8")
     buf = bytearray(codec.encode(arr))
     buf[-1] = 0  # corrupt the checksum

@@ -16,7 +16,7 @@ class MsgPackConfig(ConfigDict):
     use_bin_type: bool
 
 
-class MsgPack(Codec):
+class MsgPack(Codec[Literal['msgpack2']]):
     """Codec to encode data as msgpacked bytes. Useful for encoding an array of Python
     objects.
 
@@ -53,8 +53,6 @@ class MsgPack(Codec):
     Requires `msgpack <https://pypi.org/project/msgpack/>`_ to be installed.
 
     """
-
-    codec_id: ClassVar[Literal['msgpack2']] = 'msgpack2'
     use_single_float: bool
     use_bin_type: bool
     raw: bool

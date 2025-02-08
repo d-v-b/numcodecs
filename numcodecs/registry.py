@@ -3,13 +3,12 @@ applications to dynamically register and look-up codec classes."""
 
 import logging
 from importlib.metadata import EntryPoints, entry_points
-from typing import cast
 
 from numcodecs.abc import Codec, ConfigDict
 from numcodecs.errors import UnknownCodecError
 
 logger = logging.getLogger("numcodecs")
-codec_registry: dict[str, type[Codec]] = {}
+codec_registry: dict[str, type[Codec[str]]] = {}
 entries: dict[str, EntryPoints] = {}
 
 
@@ -22,7 +21,7 @@ def run_entrypoints() -> None:
 run_entrypoints()
 
 
-def get_codec(config: ConfigDict) -> Codec:
+def get_codec(config: ConfigDict[str]) -> Codec[str]:
     """Obtain a codec for the given configuration.
 
     Parameters
@@ -43,12 +42,18 @@ def get_codec(config: ConfigDict) -> Codec:
     Zlib(level=1)
 
     """
-    config = cast(dict[str, object], dict(config))
-    codec_id = config.pop('id', None)
+    config_mut: dict[str, object] = dict(config)
+    try:
+        codec_id = config_mut.pop('id')
+    except KeyError as e:
+        raise ValueError("codec configuration must contain an 'id' field") from e
+    if not isinstance(codec_id, str):
+        raise TypeError(f"codec identifier must be a string, not {type(codec_id)}")
+
     cls = codec_registry.get(codec_id)
     if cls is None and codec_id in entries:
         logger.debug("Auto loading codec '%s' from entrypoint", codec_id)
-        cls = entries[codec_id].load()
+        cls = entries[codec_id].load()  # type: ignore[attr-defined]
         register_codec(cls, codec_id=codec_id)
     if cls:
         return cls.from_config(config)

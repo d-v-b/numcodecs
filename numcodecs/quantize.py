@@ -11,14 +11,13 @@ from .abc import Codec, ConfigDict
 from .compat import ensure_ndarray, ndarray_copy
 
 
-class QuantizeConfig(ConfigDict):
-    id: Literal['quantize']
+class QuantizeConfig(ConfigDict[Literal['quantize']]):
     digits: int
     dtype: str
     astype: str
 
 
-class Quantize(Codec):
+class Quantize(Codec[Literal['quantize']]):
     """Lossy filter to reduce the precision of floating point data.
 
     Parameters
@@ -56,8 +55,6 @@ class Quantize(Codec):
     numcodecs.fixedscaleoffset.FixedScaleOffset
 
     """
-
-    codec_id: ClassVar[Literal['quantize']] = 'quantize'
     digits: int
     dtype: np.dtype[Any]
     astype: np.dtype[Any]

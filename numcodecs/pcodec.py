@@ -15,7 +15,7 @@ from pcodec import (  # type: ignore[import-not-found]
 DEFAULT_MAX_PAGE_N = 262144
 
 
-class PCodec(Codec):
+class PCodec(Codec[Literal['pcodec']]):
     """
     PCodec (or pco, pronounced "pico") losslessly compresses and decompresses
     numerical sequences with high compression ratio and fast speed.
@@ -48,8 +48,6 @@ class PCodec(Codec):
     equal_pages_up_to : int
         Divide the chunk into equal pages of up to this many numbers.
     """
-
-    codec_id: ClassVar[Literal['pcodec']] = "pcodec"
     level: int
     mode_spec: Literal["auto", "classic"]
     delta_spec: Literal["auto", "none", "try_consecutive", "try_lookback"]

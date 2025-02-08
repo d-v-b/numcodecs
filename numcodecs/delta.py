@@ -13,12 +13,13 @@ if TYPE_CHECKING:
 from .abc import Codec, ConfigDict
 from .compat import ensure_ndarray, ndarray_copy
 
-class DeltaConfig(ConfigDict):
-    id: Literal['delta']
+
+class DeltaConfig(ConfigDict[Literal['delta']]):
     dtype: str
     astype: str
 
-class Delta(Codec):
+
+class Delta(Codec[Literal['delta']]):
     """Codec to encode data as the difference between adjacent values.
 
     Parameters
@@ -52,7 +53,6 @@ class Delta(Codec):
 
     """
 
-    codec_id:ClassVar[Literal['delta']] = 'delta'
     dtype: np.dtype[Any]
     astype: np.dtype[Any]
 

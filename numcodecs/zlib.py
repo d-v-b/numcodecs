@@ -9,7 +9,7 @@ from .abc import Codec
 from .compat import ensure_contiguous_ndarray, ndarray_copy
 
 
-class Zlib(Codec):
+class Zlib(Codec[Literal['zlib']]):
     """Codec providing compression using zlib via the Python standard library.
 
     Parameters
@@ -18,8 +18,6 @@ class Zlib(Codec):
         Compression level.
 
     """
-
-    codec_id: ClassVar[Literal['zlib']] = 'zlib'
     level: int
 
     def __init__(self, level: int = 1) -> None:
