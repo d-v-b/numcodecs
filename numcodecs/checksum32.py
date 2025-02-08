@@ -3,13 +3,13 @@ import zlib
 from collections.abc import Callable
 from contextlib import suppress
 from types import ModuleType
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Optional
 
 import numpy as np
 
 from .abc import Codec
 from .compat import ensure_contiguous_ndarray, ndarray_copy
-from .jenkins import jenkins_lookup3
+from .jenkins import jenkins_lookup3 # type: ignore[import-untyped]
 
 _crc32c: Optional[ModuleType] = None
 with suppress(ImportError):
@@ -23,16 +23,16 @@ CHECKSUM_LOCATION = Literal['start', 'end']
 
 class Checksum32(Codec):
     # override in sub-class
-    checksum: Callable[["Buffer", int], int] | None = None
+    checksum: ClassVar[Callable[[Buffer], int]]
     location: CHECKSUM_LOCATION = 'start'
 
-    def __init__(self, location: CHECKSUM_LOCATION | None = None):
+    def __init__(self, location: CHECKSUM_LOCATION | None = None) -> None:
         if location is not None:
             self.location = location
         if self.location not in ['start', 'end']:
             raise ValueError(f"Invalid checksum location: {self.location}")
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> np.ndarray[Any, np.dtype[np.uint8]]:
         arr = ensure_contiguous_ndarray(buf).view('u1')
         checksum = self.checksum(arr) & 0xFFFFFFFF
         enc = np.empty(arr.nbytes + 4, dtype='u1')
@@ -46,7 +46,7 @@ class Checksum32(Codec):
         ndarray_copy(arr, payload_view)
         return enc
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> np.ndarray[Any, np.dtype[Any]]:
         if len(buf) < 4:
             raise ValueError("Input buffer is too short to contain a 32-bit checksum.")
         if out is not None:
@@ -77,9 +77,9 @@ class CRC32(Checksum32):
         Where to place the checksum in the buffer.
     """
 
-    codec_id = 'crc32'
-    checksum = zlib.crc32
-    location = 'start'
+    codec_id: ClassVar[Literal['crc32']] = 'crc32'
+    checksum: ClassVar[Callable[[Buffer, int, int], int]] = zlib.crc32
+    location: CHECKSUM_LOCATION = 'start'
 
 
 class Adler32(Checksum32):
@@ -91,9 +91,9 @@ class Adler32(Checksum32):
         Where to place the checksum in the buffer.
     """
 
-    codec_id = 'adler32'
-    checksum = zlib.adler32
-    location = 'start'
+    codec_id: ClassVar[Literal['adler32']] = 'adler32'
+    checksum: ClassVar[Callable[[Buffer, int, int], int]] = zlib.adler32
+    location: CHECKSUM_LOCATION = 'start'
 
 
 class JenkinsLookup3(Checksum32):
@@ -115,17 +115,18 @@ class JenkinsLookup3(Checksum32):
         bytes prepended to the buffer before evaluating the hash, default: None
     """
 
-    checksum = jenkins_lookup3
-    codec_id = "jenkins_lookup3"
+    codec_id: ClassVar[Literal['jenkins_lookup3']] = "jenkins_lookup3"
+    checksum: ClassVar[Callable[[Buffer, int, int], int]] = jenkins_lookup3
+    prefix: np.ndarray[Any, np.dtype[np.uint8]] | None
 
-    def __init__(self, initval: int = 0, prefix=None):
+    def __init__(self, initval: int = 0, prefix: Buffer | None = None):
         self.initval = initval
         if prefix is None:
             self.prefix = None
         else:
             self.prefix = np.frombuffer(prefix, dtype='uint8')
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> bytes:
         """Return buffer plus 4-byte Bob Jenkin's lookup3 checksum"""
         buf = ensure_contiguous_ndarray(buf).ravel().view('uint8')
         if self.prefix is None:
@@ -134,7 +135,7 @@ class JenkinsLookup3(Checksum32):
             val = jenkins_lookup3(np.hstack((self.prefix, buf)), self.initval)
         return buf.tobytes() + struct.pack("<I", val)
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> Buffer:
         """Check Bob Jenkin's lookup3 checksum, and return buffer without it"""
         b = ensure_contiguous_ndarray(buf).view('uint8')
         if self.prefix is None:
@@ -165,6 +166,6 @@ if _crc32c:
             Where to place the checksum in the buffer.
         """
 
-        codec_id = 'crc32c'
-        checksum = _crc32c.crc32c  # type: ignore[union-attr]
-        location = 'end'
+        codec_id: ClassVar[Literal['crc32c']] = 'crc32c'
+        checksum: Classvar[Callable[[Buffer, int, int], int]] = _crc32c.crc32c  # type: ignore[name-defined]
+        location: CHECKSUM_LOCATION = 'end'

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 try:
-    from numcodecs.vlen import VLenArray
+    from numcodecs.vlen import VLenArray  # type: ignore[import-untyped]
 except ImportError as e:  # pragma: no cover
     raise unittest.SkipTest("vlen-array not available") from e
 from numcodecs.tests.common import (

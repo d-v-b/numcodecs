@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 try:
-    from numcodecs.zstd import Zstd
+    from numcodecs.zstd import Zstd  # type: ignore[import-untyped]
 except ImportError:  # pragma: no cover
     pytest.skip("numcodecs.zstd not available", allow_module_level=True)
 

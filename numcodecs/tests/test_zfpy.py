@@ -6,7 +6,7 @@ import pytest
 
 try:
     # noinspection PyProtectedMember
-    from numcodecs.zfpy import ZFPY, _zfpy
+    from numcodecs.zfpy import ZFPY, _zfpy  # type: ignore[attr-defined]
 except ImportError:  # pragma: no cover
     pytest.skip("ZFPY not available", allow_module_level=True)
 
@@ -85,7 +85,7 @@ def test_err_encode_list() -> None:
     data = ['foo', 'bar', 'baz']
     for codec in codecs:
         with pytest.raises(TypeError):
-            codec.encode(data)
+            codec.encode(data)  # type: ignore[arg-type]
 
 
 def test_err_encode_non_contiguous() -> None:

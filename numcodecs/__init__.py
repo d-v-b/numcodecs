@@ -23,8 +23,43 @@ from contextlib import suppress
 
 from numcodecs.registry import get_codec as get_codec
 from numcodecs.registry import register_codec
-from numcodecs.version import version as __version__  # noqa: F401
+from numcodecs.version import version as __version__  # type: ignore[import-untyped]
 from numcodecs.zlib import Zlib
+
+__all__ = (
+    'BZ2',
+    'CRC32',
+    'CRC32C',
+    'JSON',
+    'LZ4',
+    'LZMA',
+    'ZFPY',
+    'Adler32',
+    'AsType',
+    'Base64',
+    'BitRound',
+    'Blosc',
+    'Categorize',
+    'Delta',
+    'FixedScaleOffset',
+    'Fletcher32',
+    'GZip',
+    'JenkinsLookup3',
+    'MsgPack',
+    'PCodec',
+    'PackBits',
+    'Pickle',
+    'Quantize',
+    'Shuffle',
+    'VLenArray',
+    'VLenBytes',
+    'VLenUTF8',
+    'Zlib',
+    'Zstd',
+    '__version__',
+    'get_codec',
+    'register_codec',
+)
 
 register_codec(Zlib)
 
@@ -41,7 +76,7 @@ from numcodecs.lzma import LZMA
 register_codec(LZMA)
 
 from numcodecs import blosc
-from numcodecs.blosc import Blosc
+from numcodecs.blosc import Blosc  # type: ignore[import-untyped]
 
 register_codec(Blosc)
 # initialize blosc
@@ -54,12 +89,12 @@ blosc.set_nthreads(min(8, ncores))
 atexit.register(blosc.destroy)
 
 from numcodecs import zstd as zstd
-from numcodecs.zstd import Zstd
+from numcodecs.zstd import Zstd  # type: ignore[import-untyped]
 
 register_codec(Zstd)
 
 from numcodecs import lz4 as lz4
-from numcodecs.lz4 import LZ4
+from numcodecs.lz4 import LZ4  # type: ignore[import-untyped]
 
 register_codec(LZ4)
 
@@ -114,13 +149,13 @@ from numcodecs.json import JSON
 register_codec(JSON)
 
 from numcodecs import vlen as vlen
-from numcodecs.vlen import VLenArray, VLenBytes, VLenUTF8
+from numcodecs.vlen import VLenArray, VLenBytes, VLenUTF8  # type: ignore[import-untyped]
 
 register_codec(VLenUTF8)
 register_codec(VLenBytes)
 register_codec(VLenArray)
 
-from numcodecs.fletcher32 import Fletcher32
+from numcodecs.fletcher32 import Fletcher32  # type: ignore[import-untyped]
 
 register_codec(Fletcher32)
 

@@ -1,4 +1,9 @@
 import zlib as _zlib
+from typing import ClassVar, Literal
+
+from typing_extensions import Buffer
+
+from numcodecs.ndarray_like import NDArrayLike
 
 from .abc import Codec
 from .compat import ensure_contiguous_ndarray, ndarray_copy
@@ -14,12 +19,13 @@ class Zlib(Codec):
 
     """
 
-    codec_id = 'zlib'
+    codec_id: ClassVar[Literal['zlib']] = 'zlib'
+    level: int
 
-    def __init__(self, level=1):
+    def __init__(self, level: int = 1) -> None:
         self.level = level
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> Buffer:
         # normalise inputs
         buf = ensure_contiguous_ndarray(buf)
 
@@ -27,7 +33,7 @@ class Zlib(Codec):
         return _zlib.compress(buf, self.level)
 
     # noinspection PyMethodMayBeStatic
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> NDArrayLike:
         # normalise inputs
         buf = ensure_contiguous_ndarray(buf)
         if out is not None:

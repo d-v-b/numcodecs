@@ -28,19 +28,37 @@ other and vice versa.
 
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from numcodecs.ndarray_like import NDArrayLike
+
+if TYPE_CHECKING:
+    from typing_extensions import Buffer
+    from typing import ClassVar, Self, ReadOnly
+
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import TypedDict
+
+
+class ConfigDict(TypedDict, total=False):
+    """
+    A typeddict model of a numcodecs codec configuration dictionary.
+    """
+
+    id: ReadOnly[str]
 
 
 class Codec(ABC):
     """Codec abstract base class."""
 
-    # override in sub-class
-    codec_id: Optional[str] = None
+    codec_id: ClassVar[str]
+    max_buffer_size: int | None
     """Codec identifier."""
 
     @abstractmethod
-    def encode(self, buf):  # pragma: no cover
+    def encode(self, buf: Buffer) -> Buffer:
         """Encode data in `buf`.
 
         Parameters
@@ -57,7 +75,9 @@ class Codec(ABC):
         """
 
     @abstractmethod
-    def decode(self, buf, out=None):  # pragma: no cover
+    def decode(
+        self, buf: Buffer, out: Buffer | None = None
+    ) -> Buffer | NDArrayLike:  # pragma: no cover
         """Decode data in `buf`.
 
         Parameters
@@ -76,7 +96,7 @@ class Codec(ABC):
             buffer protocol.
         """
 
-    def get_config(self):
+    def get_config(self) -> ConfigDict:
         """Return a dictionary holding configuration parameters for this
         codec. Must include an 'id' field with the codec identifier. All
         values must be compatible with JSON encoding."""
@@ -84,7 +104,7 @@ class Codec(ABC):
         # override in sub-class if need special encoding of config values
 
         # setup config object
-        config = {'id': self.codec_id}
+        config: ConfigDict = {'id': self.codec_id}
 
         # by default, assume all non-private members are configuration
         # parameters - override this in sub-class if not the case
@@ -95,7 +115,7 @@ class Codec(ABC):
         return config
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: ConfigDict) -> Self:
         """Instantiate codec from a configuration object."""
         # N.B., assume at this point the 'id' field has been removed from
         # the config object
@@ -106,14 +126,14 @@ class Codec(ABC):
         # keyword arguments without any special decoding
         return cls(**config)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         # override in sub-class if need special equality comparison
         try:
-            return self.get_config() == other.get_config()
+            return self.get_config() == other.get_config()  # type: ignore[attr-defined, no-any-return]
         except AttributeError:
             return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         # override in sub-class if need special representation
 
         # by default, assume all non-private members are configuration
@@ -125,3 +145,10 @@ class Codec(ABC):
         ]
         r += ', '.join(params) + ')'
         return r
+
+
+class SupportsPartialDecode(Codec):
+    @abstractmethod
+    def decode_partial(
+        self, buf: Buffer, start: int, stop: int, out: Buffer | None = None
+    ) -> Buffer: ...

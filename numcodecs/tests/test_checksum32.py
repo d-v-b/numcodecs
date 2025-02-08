@@ -1,11 +1,13 @@
 import itertools
 from contextlib import suppress
+from typing import Any
 
 import numpy as np
 import pytest
 
 from numcodecs.abc import Codec
 from numcodecs.checksum32 import CRC32, Adler32
+from numcodecs.compat import ensure_ndarray
 from numcodecs.tests.common import (
     check_backwards_compatibility,
     check_config,
@@ -56,15 +58,15 @@ if has_crc32c:
 
 
 @pytest.mark.parametrize(("codec", "arr"), itertools.product(codecs, arrays))
-def test_encode_decode(codec: Codec, arr: np.ndarray) -> None:
+def test_encode_decode(codec: Codec, arr: np.ndarray[Any, np.dtype[Any]]) -> None:
     check_encode_decode(arr, codec)
 
 
 @pytest.mark.parametrize(("codec", "arr"), itertools.product(codecs, arrays))
-def test_errors(codec: Codec, arr: np.ndarray) -> None:
+def test_errors(codec: Codec, arr: np.ndarray[Any, np.dtype[Any]]) -> None:
     enc = codec.encode(arr)
     with pytest.raises(RuntimeError):
-        codec.decode(enc[:-1])
+        codec.decode(ensure_ndarray(enc)[:-1])
 
 
 @pytest.mark.parametrize("codec", codecs)
@@ -91,17 +93,17 @@ def test_err_encode_non_contiguous(codec: Codec) -> None:
 def test_err_encode_list(codec: Codec) -> None:
     data = ['foo', 'bar', 'baz']
     with pytest.raises(TypeError):
-        codec.encode(data)
+        codec.encode(data)  # type: ignore[arg-type]
 
 
 def test_err_location() -> None:
     with pytest.raises(ValueError):
-        CRC32(location="foo")
+        CRC32(location="foo")  # type: ignore[arg-type]
     with pytest.raises(ValueError):
-        Adler32(location="foo")
+        Adler32(location="foo")  # type: ignore[arg-type]
     if has_crc32c:
         with pytest.raises(ValueError):
-            CRC32C(location="foo")
+            CRC32C(location="foo")  # type: ignore[arg-type]
 
 
 def test_repr() -> None:

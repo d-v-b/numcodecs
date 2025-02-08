@@ -1,18 +1,20 @@
 import warnings
 from contextlib import suppress
 from importlib.metadata import PackageNotFoundError, version
-from types import ModuleType
-from typing import Optional
+from typing import ClassVar, Literal, cast
 
-_zfpy: Optional[ModuleType] = None
+from typing_extensions import Buffer
 
-_zfpy_version: tuple = ()
+has_zfpy: bool = False
+
+_zfpy_version: tuple[int, ...] = ()
+
 with suppress(PackageNotFoundError):
     _zfpy_version = tuple(map(int, version("zfpy").split(".")))
 
 if _zfpy_version:
     # Check NumPy version
-    _numpy_version: tuple = tuple(map(int, version("numpy").split('.')))
+    _numpy_version: tuple[int, ...] = tuple(map(int, version("numpy").split('.')))
     if _numpy_version >= (2, 0, 0) and _zfpy_version < (1, 0, 1):  # pragma: no cover
         _zfpy_version = ()
         warnings.warn(
@@ -23,9 +25,10 @@ if _zfpy_version:
         )
     else:
         with suppress(ImportError):
-            import zfpy as _zfpy  # type: ignore[no-redef]
+            import zfpy as _zfpy  # type: ignore[import-not-found]
 
-if _zfpy:
+            has_zfpy = True
+if has_zfpy:
     import numpy as np
 
     from .abc import Codec
@@ -49,15 +52,20 @@ if _zfpy:
 
         """
 
-        codec_id = "zfpy"
+        codec_id: ClassVar[Literal['zfpy']] = "zfpy"
+        mode: str
+        tolerance: int
+        rate: int
+        precision: int
+        compression_kwargs: dict[str, object]
 
         def __init__(
             self,
-            mode=_zfpy.mode_fixed_accuracy,
-            tolerance=-1,
-            rate=-1,
-            precision=-1,
-            compression_kwargs=None,
+            mode: str = _zfpy.mode_fixed_accuracy,
+            tolerance: int = -1,
+            rate: int = -1,
+            precision: int = -1,
+            compression_kwargs: object = None,
         ):
             self.mode = mode
             if mode == _zfpy.mode_fixed_accuracy:
@@ -71,7 +79,7 @@ if _zfpy:
             self.rate = rate
             self.precision = precision
 
-        def encode(self, buf):
+        def encode(self, buf: Buffer) -> Buffer:
             # not flatten c-order array and raise exception for f-order array
             if not isinstance(buf, np.ndarray):
                 raise TypeError(
@@ -88,9 +96,10 @@ if _zfpy:
             buf = ensure_contiguous_ndarray(buf, flatten=flatten)
 
             # do compression
-            return _zfpy.compress_numpy(buf, write_header=True, **self.compression_kwargs)
+            res = _zfpy.compress_numpy(buf, write_header=True, **self.compression_kwargs)
+            return cast(Buffer, res)
 
-        def decode(self, buf, out=None):
+        def decode(self, buf: Buffer, out: Buffer | None = None) -> Buffer:
             # normalise inputs
             buf = ensure_bytes(buf)
             if out is not None:
@@ -105,7 +114,7 @@ if _zfpy:
             else:
                 return dec
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return (
                 f"{type(self).__name__}(mode={self.mode!r}, "
                 f"tolerance={self.tolerance}, rate={self.rate}, "

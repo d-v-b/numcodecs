@@ -1,5 +1,6 @@
 import os.path
 import sys
+from collections.abc import Generator
 
 import pytest
 
@@ -9,7 +10,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 
 @pytest.fixture
-def set_path() -> None:
+def set_path() -> Generator[None, None, None]:
     sys.path.append(here)
     numcodecs.registry.run_entrypoints()
     yield

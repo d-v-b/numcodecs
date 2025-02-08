@@ -1,6 +1,16 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 import numpy as np
 
-from .abc import Codec
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import numpy.typing as npt
+    from typing_extensions import Buffer
+
+from .abc import Codec, ConfigDict
 from .compat import ensure_ndarray, ensure_text, ndarray_copy
 
 
@@ -36,8 +46,13 @@ class Categorize(Codec):
     """
 
     codec_id = 'categorize'
+    labels: list[str]
+    dtype: np.dtype[Any]
+    astype: np.dtype[Any]
 
-    def __init__(self, labels, dtype, astype='u1'):
+    def __init__(
+        self, labels: Iterable[str], dtype: npt.DTypeLike, astype: npt.DTypeLike = 'u1'
+    ) -> None:
         self.dtype = np.dtype(dtype)
         if self.dtype.kind not in 'UO':
             raise TypeError("only unicode ('U') and object ('O') dtypes are supported")
@@ -46,7 +61,7 @@ class Categorize(Codec):
         if self.astype == np.dtype(object):
             raise TypeError('encoding as object array not supported')
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> np.ndarray[Any, np.dtype[Any]]:
         # normalise input
         if self.dtype == np.dtype(object):
             arr = np.asarray(buf, dtype=object)
@@ -65,7 +80,7 @@ class Categorize(Codec):
 
         return enc
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> np.ndarray[Any, np.dtype[Any]]:
         # normalise input
         enc = ensure_ndarray(buf).view(self.astype)
 
@@ -82,7 +97,7 @@ class Categorize(Codec):
         # handle output
         return ndarray_copy(dec, out)
 
-    def get_config(self):
+    def get_config(self) -> ConfigDict:
         return {
             'id': self.codec_id,
             'labels': self.labels,
@@ -90,7 +105,7 @@ class Categorize(Codec):
             'astype': self.astype.str,
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         # make sure labels part is not too long
         labels = repr(self.labels[:3])
         if len(self.labels) > 3:

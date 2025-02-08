@@ -32,7 +32,7 @@ def test_decode() -> None:
     arr = np.arange(10, 20, 1, dtype=encode_dtype)
     expect = arr.astype(decode_dtype)
     actual = codec.decode(arr)
-    assert_array_equal(expect, actual)
+    assert_array_equal(expect, actual)  # type: ignore[arg-type]
     assert np.dtype(decode_dtype) == actual.dtype
 
 
@@ -42,7 +42,7 @@ def test_encode() -> None:
     arr = np.arange(10, 20, 1, dtype=decode_dtype)
     expect = arr.astype(encode_dtype)
     actual = codec.encode(arr)
-    assert_array_equal(expect, actual)
+    assert_array_equal(expect, actual)  # type: ignore[arg-type]
     assert np.dtype(encode_dtype) == actual.dtype
 
 

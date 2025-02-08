@@ -1,8 +1,19 @@
+from typing import Any, ClassVar, Literal, cast
+
 import msgpack
 import numpy as np
+import numpy.typing as npt
+from typing_extensions import Buffer
 
-from .abc import Codec
+from .abc import Codec, ConfigDict
 from .compat import ensure_contiguous_ndarray
+
+
+class MsgPackConfig(ConfigDict):
+    id: Literal['msgpack2']
+    raw: bool
+    use_single_float: bool
+    use_bin_type: bool
 
 
 class MsgPack(Codec):
@@ -43,27 +54,33 @@ class MsgPack(Codec):
 
     """
 
-    codec_id = 'msgpack2'
+    codec_id: ClassVar[Literal['msgpack2']] = 'msgpack2'
+    use_single_float: bool
+    use_bin_type: bool
+    raw: bool
 
-    def __init__(self, use_single_float=False, use_bin_type=True, raw=False):
+    def __init__(
+        self, use_single_float: bool = False, use_bin_type: bool = True, raw: bool = False
+    ):
         self.use_single_float = use_single_float
         self.use_bin_type = use_bin_type
         self.raw = raw
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer | npt.ArrayLike) -> bytes:
         try:
             buf = np.asarray(buf)
         except ValueError:
             buf = np.asarray(buf, dtype=object)
         items = buf.tolist()
         items.extend((buf.dtype.str, buf.shape))
-        return msgpack.packb(
+        res = msgpack.packb(
             items,
             use_bin_type=self.use_bin_type,
             use_single_float=self.use_single_float,
         )
+        return cast(bytes, res)
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> np.ndarray[Any, np.dtype[Any]]:
         buf = ensure_contiguous_ndarray(buf)
         items = msgpack.unpackb(buf, raw=self.raw)
         dec = np.empty(items[-1], dtype=items[-2])
@@ -74,7 +91,7 @@ class MsgPack(Codec):
         else:
             return dec
 
-    def get_config(self):
+    def get_config(self) -> MsgPackConfig:
         return {
             'id': self.codec_id,
             'raw': self.raw,
@@ -82,5 +99,5 @@ class MsgPack(Codec):
             'use_bin_type': self.use_bin_type,
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'MsgPack(raw={self.raw!r}, use_bin_type={self.use_bin_type!r}, use_single_float={self.use_single_float!r})'

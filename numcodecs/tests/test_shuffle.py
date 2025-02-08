@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from multiprocessing.pool import Pool, ThreadPool
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import pytest
@@ -48,7 +48,7 @@ arrays = [
 
 @pytest.mark.parametrize('array', arrays)
 @pytest.mark.parametrize('codec', codecs)
-def test_encode_decode(array: np.ndarray, codec: Shuffle) -> None:
+def test_encode_decode(array: np.ndarray[Any, np.dtype[Any]], codec: Shuffle) -> None:
     check_encode_decode(array, codec)
 
 
@@ -79,12 +79,12 @@ def test_eq() -> None:
     assert Shuffle(elementsize=16) != Shuffle()
 
 
-def _encode_worker(data: np.ndarray) -> bytes:
+def _encode_worker(data: np.ndarray[Any, np.dtype[Any]]) -> np.ndarray[Any, np.dtype[Any]]:
     compressor = Shuffle()
     return compressor.encode(data)
 
 
-def _decode_worker(enc: bytes) -> np.ndarray:
+def _decode_worker(enc: np.ndarray[Any, np.dtype[Any]]) -> np.ndarray[Any, np.dtype[Any]]:
     compressor = Shuffle()
     return compressor.decode(enc)
 

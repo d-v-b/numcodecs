@@ -1,4 +1,10 @@
+from __future__ import annotations
+
 import bz2 as _bz2
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing_extensions import Buffer
 
 from numcodecs.abc import Codec
 from numcodecs.compat import ensure_contiguous_ndarray, ndarray_copy
@@ -15,11 +21,12 @@ class BZ2(Codec):
     """
 
     codec_id = 'bz2'
+    level: int
 
-    def __init__(self, level=1):
+    def __init__(self, level: int = 1) -> None:
         self.level = level
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> bytes:
         # normalise input
         buf = ensure_contiguous_ndarray(buf)
 
@@ -27,7 +34,7 @@ class BZ2(Codec):
         return _bz2.compress(buf, self.level)
 
     # noinspection PyMethodMayBeStatic
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> Buffer:
         # normalise inputs
         buf = ensure_contiguous_ndarray(buf)
         if out is not None:

@@ -1,3 +1,5 @@
+from typing import Any, Literal, cast
+
 import numpy as np
 import pytest
 
@@ -8,11 +10,11 @@ from numcodecs.bitround import BitRound, max_bits
 
 # TODO: add other dtypes
 @pytest.fixture(params=["float32", "float64"])
-def dtype(request: pytest.FixtureRequest) -> str:
-    return request.param
+def dtype(request: pytest.FixtureRequest) -> Literal["float32", "float64"]:
+    return cast(Literal["float32", "float64"], request.param)
 
 
-def round(data: np.ndarray, keepbits: int) -> np.ndarray:
+def round(data: np.ndarray[Any, np.dtype[Any]], keepbits: int) -> np.ndarray[Any, np.dtype[Any]]:
     codec = BitRound(keepbits=keepbits)
     data = data.copy()  # otherwise overwrites the input
     encoded = codec.encode(data)

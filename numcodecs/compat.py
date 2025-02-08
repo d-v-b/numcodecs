@@ -1,12 +1,14 @@
 import array
 import codecs
+from typing import Any
 
 import numpy as np
+from typing_extensions import Buffer
 
 from .ndarray_like import NDArrayLike, is_ndarray_like
 
 
-def ensure_ndarray_like(buf) -> NDArrayLike:
+def ensure_ndarray_like(buf: Buffer | NDArrayLike) -> NDArrayLike:
     """Convenience function to coerce `buf` to ndarray-like array.
 
     Parameters
@@ -41,7 +43,7 @@ def ensure_ndarray_like(buf) -> NDArrayLike:
     return buf
 
 
-def ensure_ndarray(buf) -> np.ndarray:
+def ensure_ndarray(buf: Buffer | NDArrayLike) -> np.ndarray[Any, np.dtype[Any]]:
     """Convenience function to coerce `buf` to a numpy array, if it is not already a
     numpy array.
 
@@ -63,7 +65,9 @@ def ensure_ndarray(buf) -> np.ndarray:
     return np.array(ensure_ndarray_like(buf), copy=False)
 
 
-def ensure_contiguous_ndarray_like(buf, max_buffer_size=None, flatten=True) -> NDArrayLike:
+def ensure_contiguous_ndarray_like(
+    buf: Buffer, max_buffer_size: int | None = None, flatten: bool = True
+) -> NDArrayLike:
     """Convenience function to coerce `buf` to ndarray-like array.
     Also ensures that the returned value exports fully contiguous memory,
     and supports the new-style buffer interface. If the optional max_buffer_size is
@@ -117,7 +121,9 @@ def ensure_contiguous_ndarray_like(buf, max_buffer_size=None, flatten=True) -> N
     return arr
 
 
-def ensure_contiguous_ndarray(buf, max_buffer_size=None, flatten=True) -> np.ndarray:
+def ensure_contiguous_ndarray(
+    buf: Buffer, max_buffer_size: int | None = None, flatten: bool = True
+) -> np.ndarray[Any, np.dtype[Any]]:
     """Convenience function to coerce `buf` to a numpy array, if it is not already a
     numpy array. Also ensures that the returned value exports fully contiguous memory,
     and supports the new-style buffer interface. If the optional max_buffer_size is
@@ -150,7 +156,7 @@ def ensure_contiguous_ndarray(buf, max_buffer_size=None, flatten=True) -> np.nda
     )
 
 
-def ensure_bytes(buf) -> bytes:
+def ensure_bytes(buf: Buffer | NDArrayLike) -> bytes:
     """Obtain a bytes object from memory exposed by `buf`."""
 
     if not isinstance(buf, bytes):
@@ -167,14 +173,14 @@ def ensure_bytes(buf) -> bytes:
     return buf
 
 
-def ensure_text(s, encoding="utf-8"):
+def ensure_text(s: Buffer | str, encoding: str = "utf-8") -> str:
     if not isinstance(s, str):
         s = ensure_contiguous_ndarray(s)
         s = codecs.decode(s, encoding)
     return s
 
 
-def ndarray_copy(src, dst) -> NDArrayLike:
+def ndarray_copy(src: Buffer, dst: Buffer | None) -> NDArrayLike:
     """Copy the contents of the array from `src` to `dst`."""
 
     if dst is None:
@@ -182,25 +188,26 @@ def ndarray_copy(src, dst) -> NDArrayLike:
         return src
 
     # ensure ndarray like
-    src = ensure_ndarray_like(src)
-    dst = ensure_ndarray_like(dst)
+    src_arr = ensure_ndarray_like(src)
+    dst_arr = ensure_ndarray_like(dst)
 
     # flatten source array
-    src = src.reshape(-1, order="A")
+    src_flat = src_arr.reshape(-1, order="A")
 
     # ensure same data type
-    if dst.dtype != object:
-        src = src.view(dst.dtype)
-
+    if dst_arr.dtype != object:
+        src_astype = src_flat.view(dst.dtype)
+    else:
+        src_astype = src_flat
     # reshape source to match destination
-    if src.shape != dst.shape:
-        if dst.flags.f_contiguous:
+    if src_flat.shape != dst_arr.shape:
+        if dst_arr.flags.f_contiguous:
             order = "F"
         else:
             order = "C"
-        src = src.reshape(dst.shape, order=order)
+        src_reshaped = src_flat.reshape(dst_arr.shape, order=order)
 
     # copy via numpy
-    np.copyto(dst, src)
+    np.copyto(dst_arr, src_arr)
 
-    return dst
+    return dst_arr

@@ -8,6 +8,7 @@ try:
 except ImportError as e:  # pragma: no cover
     raise unittest.SkipTest("msgpack not available") from e
 
+import numpy.typing as npt
 
 from numcodecs.tests.common import (
     check_backwards_compatibility,
@@ -76,7 +77,7 @@ def test_backwards_compatibility() -> None:
         ([{b"key": b"value"}, [b"list", b"of", b"strings"]], object),
     ],
 )
-def test_non_numpy_inputs(input_data: list, dtype: str | None) -> None:
+def test_non_numpy_inputs(input_data: npt.ArrayLike, dtype: npt.DTypeLike) -> None:
     codec = MsgPack()
     # numpy will infer a range of different shapes and dtypes for these inputs.
     # Make sure that round-tripping through encode preserves this.

@@ -83,7 +83,7 @@ def test_err_encode_list() -> None:
     data = ['foo', 'bar', 'baz']
     for codec in codecs:
         with pytest.raises(TypeError):
-            codec.encode(data)
+            codec.encode(data)  # type: ignore[arg-type]
 
 
 def test_err_encode_non_contiguous() -> None:

@@ -1,7 +1,22 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
+
+from numcodecs.ndarray_like import NDArrayLike
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from typing_extensions import Buffer, ReadOnly
 import numpy as np
 
-from .abc import Codec
+from .abc import Codec, ConfigDict
 from .compat import ensure_ndarray, ndarray_copy
+
+
+class AstypeConfig(ConfigDict):
+    id: ReadOnly[Literal['astype']]
+    encode_dtype: str
+    decode_dtype: str
 
 
 class AsType(Codec):
@@ -38,20 +53,22 @@ class AsType(Codec):
 
     """
 
-    codec_id = 'astype'
+    codec_id: ClassVar[Literal['astype']] = 'astype'
+    encode_dtype: np.dtype[Any]
+    decode_dtype: np.dtype[Any]
 
-    def __init__(self, encode_dtype, decode_dtype):
+    def __init__(self, encode_dtype: npt.DtTypeLike, decode_dtype: npt.DTypeLike) -> None:
         self.encode_dtype = np.dtype(encode_dtype)
         self.decode_dtype = np.dtype(decode_dtype)
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> NDArrayLike:
         # normalise input
         arr = ensure_ndarray(buf).view(self.decode_dtype)
 
         # convert and copy
         return arr.astype(self.encode_dtype)
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> NDArrayLike:
         # normalise input
         enc = ensure_ndarray(buf).view(self.encode_dtype)
 
@@ -61,12 +78,12 @@ class AsType(Codec):
         # handle output
         return ndarray_copy(dec, out)
 
-    def get_config(self):
+    def get_config(self) -> AstypeConfig:
         return {
             'id': self.codec_id,
             'encode_dtype': self.encode_dtype.str,
             'decode_dtype': self.decode_dtype.str,
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{type(self).__name__}(encode_dtype={self.encode_dtype.str!r}, decode_dtype={self.decode_dtype.str!r})'

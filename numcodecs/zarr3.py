@@ -27,14 +27,17 @@ from __future__ import annotations
 
 import asyncio
 import math
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from functools import cached_property, partial
-from typing import Any, Self, TypeVar
+from typing import Any, Self, TypeVar, cast
 from warnings import warn
 
 import numpy as np
+import numpy.typing as npt
 
 import numcodecs
+from numcodecs.abc import ConfigDict
 
 try:
     import zarr
@@ -77,7 +80,7 @@ def _parse_codec_configuration(data: dict[str, JSON]) -> dict[str, JSON]:
 @dataclass(frozen=True)
 class _NumcodecsCodec(Metadata):
     codec_name: str
-    codec_config: dict[str, JSON]
+    codec_config: ConfigDict
 
     def __init__(self, **codec_config: JSON) -> None:
         if not self.codec_name:
@@ -111,7 +114,7 @@ class _NumcodecsCodec(Metadata):
         return cls(**codec_config)
 
     def to_dict(self) -> dict[str, JSON]:
-        codec_config = self.codec_config.copy()
+        codec_config = cast(dict[str, JSON], self.codec_config.copy())
         codec_config.pop("id", None)
         return {
             "name": self.codec_name,
@@ -123,7 +126,7 @@ class _NumcodecsCodec(Metadata):
 
     # Override __repr__ because dynamically constructed classes don't seem to work otherwise
     def __repr__(self) -> str:
-        codec_config = self.codec_config.copy()
+        codec_config = cast(dict[str, object], self.codec_config.copy())
         codec_config.pop("id", None)
         return f"{self.__class__.__name__}(codec_name={self.codec_name!r}, codec_config={codec_config!r})"
 
@@ -135,16 +138,16 @@ class _NumcodecsBytesBytesCodec(_NumcodecsCodec, BytesBytesCodec):
     async def _decode_single(self, chunk_bytes: Buffer, chunk_spec: ArraySpec) -> Buffer:
         return await asyncio.to_thread(
             as_numpy_array_wrapper,
-            self._codec.decode,
+            self._codec.decode,  # type: ignore[arg-type]
             chunk_bytes,
             chunk_spec.prototype,
         )
 
     def _encode(self, chunk_bytes: Buffer, prototype: BufferPrototype) -> Buffer:
-        encoded = self._codec.encode(chunk_bytes.as_array_like())
+        encoded = self._codec.encode(chunk_bytes.as_array_like())  # type: ignore[arg-type]
         if isinstance(encoded, np.ndarray):  # Required for checksum codecs
             return prototype.buffer.from_bytes(encoded.tobytes())
-        return prototype.buffer.from_bytes(encoded)
+        return prototype.buffer.from_bytes(encoded)  # type: ignore[arg-type]
 
     async def _encode_single(self, chunk_bytes: Buffer, chunk_spec: ArraySpec) -> Buffer:
         return await asyncio.to_thread(self._encode, chunk_bytes, chunk_spec.prototype)
@@ -156,13 +159,13 @@ class _NumcodecsArrayArrayCodec(_NumcodecsCodec, ArrayArrayCodec):
 
     async def _decode_single(self, chunk_array: NDBuffer, chunk_spec: ArraySpec) -> NDBuffer:
         chunk_ndarray = chunk_array.as_ndarray_like()
-        out = await asyncio.to_thread(self._codec.decode, chunk_ndarray)
-        return chunk_spec.prototype.nd_buffer.from_ndarray_like(out.reshape(chunk_spec.shape))
+        out = await asyncio.to_thread(self._codec.decode, chunk_ndarray)  # type: ignore[arg-type]
+        return chunk_spec.prototype.nd_buffer.from_ndarray_like(out.reshape(chunk_spec.shape))  # type: ignore[union-attr, arg-type]
 
     async def _encode_single(self, chunk_array: NDBuffer, chunk_spec: ArraySpec) -> NDBuffer:
         chunk_ndarray = chunk_array.as_ndarray_like()
-        out = await asyncio.to_thread(self._codec.encode, chunk_ndarray)
-        return chunk_spec.prototype.nd_buffer.from_ndarray_like(out)
+        out = await asyncio.to_thread(self._codec.encode, chunk_ndarray)  # type: ignore[arg-type]
+        return chunk_spec.prototype.nd_buffer.from_ndarray_like(out)  # type: ignore[arg-type]
 
 
 class _NumcodecsArrayBytesCodec(_NumcodecsCodec, ArrayBytesCodec):
@@ -172,12 +175,12 @@ class _NumcodecsArrayBytesCodec(_NumcodecsCodec, ArrayBytesCodec):
     async def _decode_single(self, chunk_buffer: Buffer, chunk_spec: ArraySpec) -> NDBuffer:
         chunk_bytes = chunk_buffer.to_bytes()
         out = await asyncio.to_thread(self._codec.decode, chunk_bytes)
-        return chunk_spec.prototype.nd_buffer.from_ndarray_like(out.reshape(chunk_spec.shape))
+        return chunk_spec.prototype.nd_buffer.from_ndarray_like(out.reshape(chunk_spec.shape))  # type: ignore[arg-type, union-attr]
 
     async def _encode_single(self, chunk_ndbuffer: NDBuffer, chunk_spec: ArraySpec) -> Buffer:
         chunk_ndarray = chunk_ndbuffer.as_ndarray_like()
-        out = await asyncio.to_thread(self._codec.encode, chunk_ndarray)
-        return chunk_spec.prototype.buffer.from_bytes(out)
+        out = await asyncio.to_thread(self._codec.encode, chunk_ndarray)  # type: ignore[arg-type]
+        return chunk_spec.prototype.buffer.from_bytes(out)  # type: ignore[arg-type]
 
 
 T = TypeVar("T", bound=_NumcodecsCodec)
@@ -190,7 +193,7 @@ def _add_docstring(cls: type[T], ref_class_name: str) -> type[T]:
     return cls
 
 
-def _add_docstring_wrapper(ref_class_name: str) -> partial:
+def _add_docstring_wrapper(ref_class_name: str) -> Callable[[Any], Any]:
     return partial(_add_docstring, ref_class_name=ref_class_name)
 
 
@@ -272,7 +275,7 @@ class Shuffle(_NumcodecsBytesBytesCodec):
 
     def evolve_from_array_spec(self, array_spec: ArraySpec) -> Shuffle:
         if array_spec.dtype.itemsize != self.codec_config.get("elementsize"):
-            return Shuffle(**{**self.codec_config, "elementsize": array_spec.dtype.itemsize})
+            return Shuffle(**{**self.codec_config, "elementsize": array_spec.dtype.itemsize})  # type: ignore[arg-type]
         return self  # pragma: no cover
 
 
@@ -286,7 +289,8 @@ class Delta(_NumcodecsArrayArrayCodec):
 
     def resolve_metadata(self, chunk_spec: ArraySpec) -> ArraySpec:
         if astype := self.codec_config.get("astype"):
-            return replace(chunk_spec, dtype=np.dtype(astype))  # type: ignore[arg-type]
+            astype = cast(npt.DTypeLike, astype)
+            return replace(chunk_spec, dtype=np.dtype(astype))
         return chunk_spec
 
 
@@ -304,12 +308,13 @@ class FixedScaleOffset(_NumcodecsArrayArrayCodec):
 
     def resolve_metadata(self, chunk_spec: ArraySpec) -> ArraySpec:
         if astype := self.codec_config.get("astype"):
-            return replace(chunk_spec, dtype=np.dtype(astype))  # type: ignore[arg-type]
+            astype = cast(npt.DTypeLike, astype)
+            return replace(chunk_spec, dtype=np.dtype(astype))
         return chunk_spec
 
     def evolve_from_array_spec(self, array_spec: ArraySpec) -> FixedScaleOffset:
         if str(array_spec.dtype) != self.codec_config.get("dtype"):
-            return FixedScaleOffset(**{**self.codec_config, "dtype": str(array_spec.dtype)})
+            return FixedScaleOffset(**{**self.codec_config, "dtype": str(array_spec.dtype)})  # type: ignore[arg-type]
         return self
 
 
@@ -322,7 +327,7 @@ class Quantize(_NumcodecsArrayArrayCodec):
 
     def evolve_from_array_spec(self, array_spec: ArraySpec) -> Quantize:
         if str(array_spec.dtype) != self.codec_config.get("dtype"):
-            return Quantize(**{**self.codec_config, "dtype": str(array_spec.dtype)})
+            return Quantize(**{**self.codec_config, "dtype": str(array_spec.dtype)})  # type: ignore[arg-type]
         return self
 
 
@@ -340,7 +345,7 @@ class PackBits(_NumcodecsArrayArrayCodec):
             dtype=np.dtype("uint8"),
         )
 
-    def validate(self, *, dtype: np.dtype[Any], **_kwargs) -> None:
+    def validate(self, *, dtype: np.dtype[Any], **_kwargs: object) -> None:
         if dtype != np.dtype("bool"):
             raise ValueError(f"Packbits filter requires bool dtype. Got {dtype}.")
 
@@ -353,12 +358,12 @@ class AsType(_NumcodecsArrayArrayCodec):
         super().__init__(**codec_config)
 
     def resolve_metadata(self, chunk_spec: ArraySpec) -> ArraySpec:
-        return replace(chunk_spec, dtype=np.dtype(self.codec_config["encode_dtype"]))  # type: ignore[arg-type]
+        return replace(chunk_spec, dtype=np.dtype(self.codec_config["encode_dtype"]))  # type: ignore[typeddict-item]
 
     def evolve_from_array_spec(self, array_spec: ArraySpec) -> AsType:
         decode_dtype = self.codec_config.get("decode_dtype")
         if str(array_spec.dtype) != decode_dtype:
-            return AsType(**{**self.codec_config, "decode_dtype": str(array_spec.dtype)})
+            return AsType(**{**self.codec_config, "decode_dtype": str(array_spec.dtype)})  # type: ignore[arg-type]
         return self
 
 

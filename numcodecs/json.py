@@ -1,9 +1,11 @@
 import json as _json
 import textwrap
+from typing import Any, ClassVar, Literal
 
 import numpy as np
+from typing_extensions import Buffer
 
-from .abc import Codec
+from .abc import Codec, ConfigDict
 from .compat import ensure_text
 
 
@@ -29,19 +31,23 @@ class JSON(Codec):
 
     """
 
-    codec_id = 'json2'
+    codec_id: ClassVar[Literal['json2']] = 'json2'
+    _text_encoding: str
+    _encoder_config: dict[str, bool | int | str | tuple[str, ...]]
+    _encoder: _json.JSONEncoder
+    _decoder_config: dict[str, bool]
 
     def __init__(
         self,
-        encoding='utf-8',
-        skipkeys=False,
-        ensure_ascii=True,
-        check_circular=True,
-        allow_nan=True,
-        sort_keys=True,
-        indent=None,
-        separators=None,
-        strict=True,
+        encoding: str = 'utf-8',
+        skipkeys: bool = False,
+        ensure_ascii: bool = True,
+        check_circular: bool = True,
+        allow_nan: bool = True,
+        sort_keys: bool = True,
+        indent: int | None = None,
+        separators: tuple[str, ...] | None = None,
+        strict: bool = True,
     ):
         self._text_encoding = encoding
         if separators is None:
@@ -61,11 +67,11 @@ class JSON(Codec):
             'separators': separators,
             'sort_keys': sort_keys,
         }
-        self._encoder = _json.JSONEncoder(**self._encoder_config)
+        self._encoder = _json.JSONEncoder(**self._encoder_config)  # type: ignore[arg-type]
         self._decoder_config = {'strict': strict}
-        self._decoder = _json.JSONDecoder(**self._decoder_config)
+        self._decoder = _json.JSONDecoder(**self._decoder_config)  # type: ignore[arg-type]
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> bytes:
         try:
             buf = np.asarray(buf)
         except ValueError:  # pragma: no cover
@@ -75,7 +81,7 @@ class JSON(Codec):
         items.append(buf.shape)
         return self._encoder.encode(items).encode(self._text_encoding)
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> np.ndarray[Any, np.dtype[Any]]:
         items = self._decoder.decode(ensure_text(buf, self._text_encoding))
         dec = np.empty(items[-1], dtype=items[-2])
         if not items[-1]:
@@ -88,13 +94,13 @@ class JSON(Codec):
         else:
             return dec
 
-    def get_config(self):
+    def get_config(self) -> ConfigDict:
         config = {'id': self.codec_id, 'encoding': self._text_encoding}
         config.update(self._encoder_config)
         config.update(self._decoder_config)
         return config
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         params = [f'encoding={self._text_encoding!r}']
         for k, v in sorted(self._encoder_config.items()):
             params.append(f'{k}={v!r}')

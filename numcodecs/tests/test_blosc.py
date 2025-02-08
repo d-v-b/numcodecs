@@ -1,12 +1,13 @@
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
+from typing import Any, Literal, cast
 
 import numpy as np
 import pytest
 
 try:
-    from numcodecs import blosc
-    from numcodecs.blosc import Blosc
+    from numcodecs import blosc  # type: ignore[attr-defined]
+    from numcodecs.blosc import Blosc  # type: ignore[import-untyped]
 except ImportError:  # pragma: no cover
     pytest.skip("numcodecs.blosc not available", allow_module_level=True)
 
@@ -64,13 +65,13 @@ def _skip_null(codec: Blosc) -> None:
 
 
 @pytest.fixture(scope='module', params=[True, False, None])
-def use_threads(request: pytest.FixtureRequest) -> bool:
-    return request.param
+def use_threads(request: pytest.FixtureRequest) -> bool | None:
+    return cast(bool | None, request.param)
 
 
 @pytest.mark.parametrize('array', arrays)
 @pytest.mark.parametrize('codec', codecs)
-def test_encode_decode(array: np.ndarray, codec: Blosc) -> None:
+def test_encode_decode(array: np.ndarray[Any, np.dtype[Any]], codec: Blosc) -> None:
     _skip_null(codec)
     check_encode_decode(array, codec)
 
@@ -83,7 +84,7 @@ def test_encode_decode(array: np.ndarray, codec: Blosc) -> None:
         for x in arrays
     ],
 )
-def test_partial_decode(codec: Blosc, array: np.ndarray) -> None:
+def test_partial_decode(codec: Blosc, array: np.ndarray[Any, np.dtype[Any]]) -> None:
     _skip_null(codec)
     check_encode_decode_partial(array, codec)
 
@@ -213,22 +214,27 @@ def test_backwards_compatibility() -> None:
     check_backwards_compatibility(Blosc.codec_id, arrays, codecs)
 
 
-def _encode_worker(data: np.ndarray) -> bytes:
+def _encode_worker(data: np.ndarray[Any, np.dtype[Any]]) -> bytes:
     compressor = Blosc(cname='zlib', clevel=9, shuffle=Blosc.SHUFFLE)
-    return compressor.encode(data)
+    return compressor.encode(data)  # type: ignore[no-any-return]
 
 
-def _decode_worker(enc: bytes) -> np.ndarray:
+def _decode_worker(enc: bytes) -> np.ndarray[Any, np.dtype[Any]]:
     compressor = Blosc()
-    return compressor.decode(enc)
+    return compressor.decode(enc)  # type: ignore[no-any-return]
 
 
-@pytest.mark.parametrize('pool', [Pool, ThreadPool])
-def test_multiprocessing(use_threads: bool, pool: type) -> None:
+@pytest.mark.parametrize('pool_type', ['processes', 'threads'])
+def test_multiprocessing(pool_type: Literal['processes', 'threads']) -> None:
     data = np.arange(1000000)
     enc = _encode_worker(data)
 
-    pool = pool(5)
+    if pool_type == 'processes':
+        pool = Pool(5)
+    elif pool_type == 'threads':
+        pool = ThreadPool(5)
+    else:
+        raise ValueError(f"invalid pool_type: {pool_type}")
 
     try:
         blosc.use_threads = use_threads

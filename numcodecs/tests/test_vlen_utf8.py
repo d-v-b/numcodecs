@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 try:
-    from numcodecs.vlen import VLenUTF8
+    from numcodecs.vlen import VLenUTF8  # type: ignore[import-untyped]
 except ImportError as e:  # pragma: no cover
     raise unittest.SkipTest("vlen-utf8 not available") from e
 from numcodecs.tests.common import (

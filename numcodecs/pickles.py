@@ -1,9 +1,16 @@
 import pickle
+from typing import ClassVar, Literal
 
 import numpy as np
+from typing_extensions import Buffer
 
-from .abc import Codec
+from .abc import Codec, ConfigDict
 from .compat import ensure_contiguous_ndarray
+
+
+class PickleConfig(ConfigDict):
+    id: Literal['pickle']
+    protocol: int
 
 
 class Pickle(Codec):
@@ -30,15 +37,16 @@ class Pickle(Codec):
 
     """
 
-    codec_id = 'pickle'
+    codec_id: ClassVar[Literal['pickle']] = 'pickle'
+    protocol: int
 
-    def __init__(self, protocol=pickle.HIGHEST_PROTOCOL):
+    def __init__(self, protocol: int = pickle.HIGHEST_PROTOCOL) -> None:
         self.protocol = protocol
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> Buffer:
         return pickle.dumps(buf, protocol=self.protocol)
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> object:
         buf = ensure_contiguous_ndarray(buf)
         dec = pickle.loads(buf)
 
@@ -48,8 +56,8 @@ class Pickle(Codec):
         else:
             return dec
 
-    def get_config(self):
+    def get_config(self) -> PickleConfig:
         return {'id': self.codec_id, 'protocol': self.protocol}
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'Pickle(protocol={self.protocol})'

@@ -45,7 +45,7 @@ ALL_CODECS = [getattr(numcodecs.zarr3, cls_name) for cls_name in numcodecs.zarr3
 @pytest.mark.parametrize("codec_class", ALL_CODECS)
 def test_entry_points(codec_class: type[numcodecs.zarr3._NumcodecsCodec]) -> None:
     codec_name = codec_class.codec_name
-    assert get_codec_class(codec_name) == codec_class
+    assert get_codec_class(codec_name) == codec_class  # type: ignore[comparison-overlap]
 
 
 @pytest.mark.parametrize("codec_class", ALL_CODECS)

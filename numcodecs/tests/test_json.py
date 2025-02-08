@@ -76,10 +76,12 @@ def test_backwards_compatibility() -> None:
         (0, None),
     ],
 )
-def test_non_numpy_inputs(input_data: list | int | dict, dtype: str | None) -> None:
+def test_non_numpy_inputs(
+    input_data: list[object] | int | dict[str, object], dtype: str | None
+) -> None:
     # numpy will infer a range of different shapes and dtypes for these inputs.
     # Make sure that round-tripping through encode preserves this.
     data = np.array(input_data, dtype=dtype)
     for codec in codecs:
         output_data = codec.decode(codec.encode(data))
-        assert input_data == output_data.tolist()
+        assert input_data == output_data.tolist()  # type: ignore[comparison-overlap]

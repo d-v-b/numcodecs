@@ -1,7 +1,24 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any, ClassVar, Literal
+
+    import numpy.typing as npt
+    from typing_extensions import Buffer
 import numpy as np
 
-from .abc import Codec
+from .abc import Codec, ConfigDict
 from .compat import ensure_ndarray, ndarray_copy
+
+
+class ScaleOffsetConfig(ConfigDict):
+    id: Literal['scaleoffset']
+    scale: float
+    offset: float
+    dtype: str
+    astype: str
 
 
 class FixedScaleOffset(Codec):
@@ -67,9 +84,15 @@ class FixedScaleOffset(Codec):
 
     """
 
-    codec_id = 'fixedscaleoffset'
+    codec_id: ClassVar[Literal['fixedscaleoffset']] = 'fixedscaleoffset'
+    offset: float
+    scale: float
+    dtype: np.dtype[Any]
+    astype: np.dtype[Any]
 
-    def __init__(self, offset, scale, dtype, astype=None):
+    def __init__(
+        self, offset: float, scale: float, dtype: npt.DTypeLike, astype: npt.DTypeLike | None = None
+    ):
         self.offset = offset
         self.scale = scale
         self.dtype = np.dtype(dtype)
@@ -80,7 +103,7 @@ class FixedScaleOffset(Codec):
         if self.dtype == np.dtype(object) or self.astype == np.dtype(object):
             raise ValueError('object arrays are not supported')
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> np.ndarray[Any, np.dtype[Any]]:
         # normalise input
         arr = ensure_ndarray(buf).view(self.dtype)
 
@@ -96,7 +119,7 @@ class FixedScaleOffset(Codec):
         # convert dtype
         return enc.astype(self.astype, copy=False)
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> np.ndarray[Any, np.dtype[Any]]:
         # interpret buffer as numpy array
         enc = ensure_ndarray(buf).view(self.astype)
 
@@ -112,7 +135,7 @@ class FixedScaleOffset(Codec):
         # handle output
         return ndarray_copy(dec, out)
 
-    def get_config(self):
+    def get_config(self) -> ScaleOffsetConfig:
         # override to handle encoding dtypes
         return {
             'id': self.codec_id,
@@ -122,7 +145,7 @@ class FixedScaleOffset(Codec):
             'astype': self.astype.str,
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         r = f'{type(self).__name__}(scale={self.scale}, offset={self.offset}, dtype={self.dtype.str!r}'
         if self.astype != self.dtype:
             r += f', astype={self.astype.str!r}'

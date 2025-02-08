@@ -1,9 +1,10 @@
 import os
 import sys
-from distutils import ccompiler
+from distutils import ccompiler  # type: ignore[import-not-found]
 from distutils.command.clean import clean
 from distutils.sysconfig import customize_compiler
 from glob import glob
+from typing import Any
 
 import cpuinfo
 from Cython.Distutils.build_ext import new_build_ext as build_ext
@@ -39,17 +40,17 @@ if sys.platform == 'darwin':
     base_compile_args.append('-stdlib=libc++')
 
 
-def info(*msg):
+def info(*msg: object) -> None:
     kwargs = {'file': sys.stdout}
     print('[numcodecs]', *msg, **kwargs)
 
 
-def error(*msg):
+def error(*msg: object) -> None:
     kwargs = {'file': sys.stderr}
     print('[numcodecs]', *msg, **kwargs)
 
 
-def blosc_extension():
+def blosc_extension() -> None:
     info('setting up Blosc extension')
 
     extra_compile_args = base_compile_args.copy()
@@ -123,7 +124,7 @@ def blosc_extension():
     ]
 
 
-def zstd_extension():
+def zstd_extension() -> None:
     info('setting up Zstandard extension')
 
     zstd_sources = []
@@ -163,7 +164,7 @@ def zstd_extension():
     ]
 
 
-def lz4_extension():
+def lz4_extension() -> None:
     info('setting up LZ4 extension')
 
     extra_compile_args = base_compile_args.copy()
@@ -189,7 +190,7 @@ def lz4_extension():
     ]
 
 
-def vlen_extension():
+def vlen_extension() -> None:
     info('setting up vlen extension')
     import numpy
 
@@ -214,7 +215,7 @@ def vlen_extension():
     ]
 
 
-def fletcher_extension():
+def fletcher_extension() -> None:
     info('setting up fletcher32 extension')
 
     extra_compile_args = base_compile_args.copy()
@@ -238,7 +239,7 @@ def fletcher_extension():
     ]
 
 
-def jenkins_extension():
+def jenkins_extension() -> None:
     info('setting up jenkins extension')
 
     extra_compile_args = base_compile_args.copy()
@@ -262,7 +263,7 @@ def jenkins_extension():
     ]
 
 
-def compat_extension():
+def compat_extension() -> None:
     info('setting up compat extension')
 
     extra_compile_args = base_compile_args.copy()
@@ -279,7 +280,7 @@ def compat_extension():
     ]
 
 
-def shuffle_extension():
+def shuffle_extension() -> None:
     info('setting up shuffle extension')
 
     extra_compile_args = base_compile_args.copy()
@@ -305,7 +306,7 @@ class BuildFailed(Exception):
 class ve_build_ext(build_ext):
     # This class allows C extension building to fail.
 
-    def run(self):
+    def run(self) -> None:
         try:
             if cpuinfo.platform.machine() == 'x86_64':
                 S_files = glob('c-blosc/internal-complibs/zstd*/decompress/*amd64.S')
@@ -319,7 +320,7 @@ class ve_build_ext(build_ext):
             error(e)
             raise BuildFailed from e
 
-    def build_extension(self, ext):
+    def build_extension(self, ext: Any) -> None:
         try:
             build_ext.build_extension(self, ext)
         except ext_errors as e:
@@ -330,7 +331,7 @@ class ve_build_ext(build_ext):
 class Sclean(clean):
     # Clean up .o files created by .S files
 
-    def run(self):
+    def run(self) -> None:
         if cpuinfo.platform.machine() == 'x86_64':
             o_files = glob('c-blosc/internal-complibs/zstd*/decompress/*amd64.o')
             for f in o_files:
@@ -339,7 +340,7 @@ class Sclean(clean):
         clean.run(self)
 
 
-def run_setup(with_extensions):
+def run_setup(with_extensions: bool) -> None:
     if with_extensions:
         ext_modules = (
             blosc_extension()

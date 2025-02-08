@@ -3,6 +3,7 @@ import inspect
 import pytest
 
 import numcodecs
+from numcodecs.abc import ConfigDict
 from numcodecs.errors import UnknownCodecError
 from numcodecs.registry import get_codec
 
@@ -14,7 +15,7 @@ def test_registry_errors() -> None:
 
 def test_get_codec_argument() -> None:
     # Check that get_codec doesn't modify its argument.
-    arg = {"id": "json2"}
+    arg: ConfigDict = {"id": "json2"}
     before = dict(arg)
     get_codec(arg)
     assert before == arg

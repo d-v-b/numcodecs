@@ -1,5 +1,9 @@
 import base64 as _base64
 
+from typing_extensions import Buffer
+
+from numcodecs.ndarray_like import NDArrayLike
+
 from .abc import Codec
 from .compat import ensure_contiguous_ndarray, ndarray_copy
 
@@ -9,13 +13,13 @@ class Base64(Codec):
 
     codec_id = "base64"
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> bytes:
         # normalise inputs
         buf = ensure_contiguous_ndarray(buf)
         # do compression
         return _base64.standard_b64encode(buf)
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> NDArrayLike:
         # normalise inputs
         buf = ensure_contiguous_ndarray(buf)
         if out is not None:

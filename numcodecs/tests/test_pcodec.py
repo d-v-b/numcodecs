@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -48,7 +50,7 @@ arrays = [
 
 @pytest.mark.parametrize("arr", arrays)
 @pytest.mark.parametrize("codec", codecs)
-def test_encode_decode(arr: np.ndarray, codec: PCodec) -> None:
+def test_encode_decode(arr: np.ndarray[Any, np.dtype[Any]], codec: PCodec) -> None:
     check_encode_decode_array_to_bytes(arr, codec)
 
 
@@ -59,7 +61,7 @@ def test_config() -> None:
 
 @pytest.mark.parametrize("param", ["mode_spec", "delta_spec", "paging_spec"])
 def test_invalid_config_error(param: str) -> None:
-    codec = PCodec(**{param: "bogus"})
+    codec = PCodec(**{param: "bogus"})  # type: ignore[arg-type]
     with pytest.raises(ValueError):
         check_encode_decode_array_to_bytes(arrays[0], codec)
 

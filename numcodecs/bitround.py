@@ -1,4 +1,7 @@
+from typing import Any, ClassVar, Literal
+
 import numpy as np
+from typing_extensions import Buffer
 
 from .abc import Codec
 from .compat import ensure_ndarray_like, ndarray_copy
@@ -35,14 +38,15 @@ class BitRound(Codec):
         to no transform.
     """
 
-    codec_id = 'bitround'
+    codec_id: ClassVar[Literal['bitround']] = 'bitround'
+    keepbits: int
 
     def __init__(self, keepbits: int):
         if keepbits < 0:
             raise ValueError("keepbits must be zero or positive")
         self.keepbits = keepbits
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> np.ndarray[Any, np.dtype[Any]]:
         """Create int array by rounding floating-point data
 
         The itemsize will be preserved, but the output should be much more
@@ -68,13 +72,13 @@ class BitRound(Codec):
         b &= mask
         return b
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> np.ndarray[Any, np.dtype[Any]]:
         """Remake floats from ints
 
         As with ``encode``, preserves itemsize.
         """
-        buf = ensure_ndarray_like(buf)
+        buf_arr = ensure_ndarray_like(buf)
         # Cast back from `int` to `float` type (noop if a `float`ing type buffer is provided)
-        dt = np.dtype(buf.dtype.str.replace("i", "f"))
-        data = buf.view(dt)
+        dt = np.dtype(buf_arr.dtype.str.replace("i", "f"))
+        data = buf_arr.view(dt)
         return ndarray_copy(data, out)

@@ -1,6 +1,9 @@
-import numpy as np
+from typing import Any
 
-from ._shuffle import _doShuffle, _doUnshuffle
+import numpy as np
+from typing_extensions import Buffer
+
+from ._shuffle import _doShuffle, _doUnshuffle  # type: ignore[import-untyped]
 from .abc import Codec
 from .compat import ensure_contiguous_ndarray
 
@@ -16,11 +19,14 @@ class Shuffle(Codec):
     """
 
     codec_id = 'shuffle'
+    elementsize: int
 
-    def __init__(self, elementsize=4):
+    def __init__(self, elementsize: int = 4) -> None:
         self.elementsize = elementsize
 
-    def _prepare_arrays(self, buf, out):
+    def _prepare_arrays(
+        self, buf: Buffer, out: Buffer | None
+    ) -> tuple[np.ndarray[Any, np.dtype[Any]], np.ndarray[Any, np.dtype[Any]]]:
         buf = ensure_contiguous_ndarray(buf)
 
         if out is None:
@@ -37,7 +43,7 @@ class Shuffle(Codec):
 
         return buf, out
 
-    def encode(self, buf, out=None):
+    def encode(self, buf: Buffer, out: Buffer | None = None) -> np.ndarray[Any, np.dtype[Any]]:
         buf, out = self._prepare_arrays(buf, out)
 
         if self.elementsize <= 1:
@@ -47,7 +53,7 @@ class Shuffle(Codec):
 
         return out
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> np.ndarray[Any, np.dtype[Any]]:
         buf, out = self._prepare_arrays(buf, out)
 
         if self.elementsize <= 1:
@@ -57,5 +63,5 @@ class Shuffle(Codec):
 
         return out
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{type(self).__name__}(elementsize={self.elementsize})'

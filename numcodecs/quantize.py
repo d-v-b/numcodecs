@@ -1,9 +1,21 @@
 import math
+from typing import Any, ClassVar, Literal
 
 import numpy as np
+import numpy.typing as npt
+from typing_extensions import Buffer
 
-from .abc import Codec
+from numcodecs.ndarray_like import NDArrayLike
+
+from .abc import Codec, ConfigDict
 from .compat import ensure_ndarray, ndarray_copy
+
+
+class QuantizeConfig(ConfigDict):
+    id: Literal['quantize']
+    digits: int
+    dtype: str
+    astype: str
 
 
 class Quantize(Codec):
@@ -45,9 +57,14 @@ class Quantize(Codec):
 
     """
 
-    codec_id = 'quantize'
+    codec_id: ClassVar[Literal['quantize']] = 'quantize'
+    digits: int
+    dtype: np.dtype[Any]
+    astype: np.dtype[Any]
 
-    def __init__(self, digits, dtype, astype=None):
+    def __init__(
+        self, digits: int, dtype: npt.DTypeLike, astype: npt.DTypeLike | None = None
+    ) -> None:
         self.digits = digits
         self.dtype = np.dtype(dtype)
         if astype is None:
@@ -57,7 +74,7 @@ class Quantize(Codec):
         if self.dtype.kind != 'f' or self.astype.kind != 'f':
             raise ValueError('only floating point data types are supported')
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> NDArrayLike:
         # normalise input
         arr = ensure_ndarray(buf).view(self.dtype)
 
@@ -75,13 +92,13 @@ class Quantize(Codec):
         # cast dtype
         return enc.astype(self.astype, copy=False)
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> Buffer:
         # filter is lossy, decoding is no-op
         dec = ensure_ndarray(buf).view(self.astype)
         dec = dec.astype(self.dtype, copy=False)
         return ndarray_copy(dec, out)
 
-    def get_config(self):
+    def get_config(self) -> QuantizeConfig:
         # override to handle encoding dtypes
         return {
             'id': self.codec_id,
@@ -90,7 +107,7 @@ class Quantize(Codec):
             'astype': self.astype.str,
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         r = f'{type(self).__name__}(digits={self.digits}, dtype={self.dtype.str!r}'
         if self.astype != self.dtype:
             r += f', astype={self.astype.str!r}'

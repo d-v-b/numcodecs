@@ -21,7 +21,6 @@ def get_entrypoints_with_importlib_metadata_loaded() -> None:
     # importlib_metadata patches importlib.metadata, which can lead to breaking changes
     # to the APIs of EntryPoint objects used when registering entrypoints. Attempt to
     # isolate those changes to just this test.
-    import importlib_metadata  # noqa: F401
 
     sys.path.append(here)
     numcodecs.registry.run_entrypoints()

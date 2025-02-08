@@ -15,7 +15,7 @@ def test_ensure_text() -> None:
         array.array('B', b'qwertyuiqwertyui'),
     ]
     for buf in bufs:
-        b = ensure_text(buf)
+        b = ensure_text(buf)  # type: ignore[arg-type]
         assert isinstance(b, str)
 
 
@@ -27,7 +27,7 @@ def test_ensure_bytes() -> None:
         array.array('l', b'qwertyuiqwertyui'),
     ]
     for buf in bufs:
-        b = ensure_bytes(buf)
+        b = ensure_bytes(buf)  # type: ignore[arg-type]
         assert isinstance(b, bytes)
 
 
@@ -46,14 +46,14 @@ def test_ensure_contiguous_ndarray_shares_memory() -> None:
         ('u', 1, mmap.mmap(-1, 10)),
     ]
     for expected_kind, expected_itemsize, buf in typed_bufs:
-        a = ensure_contiguous_ndarray(buf)
+        a = ensure_contiguous_ndarray(buf)  # type: ignore[arg-type]
         assert isinstance(a, np.ndarray)
         assert expected_kind == a.dtype.kind
         if isinstance(buf, array.array):
             assert buf.itemsize == a.dtype.itemsize
         else:
             assert expected_itemsize == a.dtype.itemsize
-        assert np.shares_memory(a, memoryview(buf))
+        assert np.shares_memory(a, memoryview(buf))  # type: ignore[arg-type]
 
 
 def test_ensure_bytes_invalid_inputs() -> None:
@@ -79,7 +79,7 @@ def test_ensure_contiguous_ndarray_invalid_inputs() -> None:
         ensure_contiguous_ndarray(np.arange(100)[::2])
 
     # unicode array.array not allowed
-    a = array.array('u', 'qwertyuiqwertyui')
+    a = array.array('u', 'qwertyuiqwertyui')  # type: ignore[assignment]
     with pytest.raises(TypeError):
         ensure_contiguous_ndarray(a)
 
@@ -108,4 +108,4 @@ def test_ensure_contiguous_ndarray_max_buffer_size() -> None:
         ]
         for buf in buffers:
             with pytest.raises(ValueError):
-                ensure_contiguous_ndarray(buf, max_buffer_size=max_buffer_size)
+                ensure_contiguous_ndarray(buf, max_buffer_size=max_buffer_size)  # type: ignore[arg-type]

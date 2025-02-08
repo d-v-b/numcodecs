@@ -1,12 +1,14 @@
 from types import ModuleType
-from typing import Optional
+from typing import ClassVar, Literal, Optional
+
+from typing_extensions import Buffer
 
 _lzma: Optional[ModuleType] = None
 try:
     import lzma as _lzma
 except ImportError:  # pragma: no cover
     try:  # noqa: SIM105
-        from backports import lzma as _lzma  # type: ignore[no-redef]
+        from backports import lzma as _lzma  # type: ignore[no-redef, import-not-found]
     except ImportError:
         pass
 
@@ -35,15 +37,25 @@ if _lzma:
 
         """
 
-        codec_id = 'lzma'
+        codec_id: ClassVar[Literal['lzma']] = 'lzma'
+        format: int
+        check: int
+        preset: int | None
+        filters: list[object] | None
 
-        def __init__(self, format=1, check=-1, preset=None, filters=None):
+        def __init__(
+            self,
+            format: int = 1,
+            check: int = -1,
+            preset: int | None = None,
+            filters: list[object] | None = None,
+        ):
             self.format = format
             self.check = check
             self.preset = preset
             self.filters = filters
 
-        def encode(self, buf):
+        def encode(self, buf: Buffer) -> Buffer:
             # normalise inputs
             buf = ensure_contiguous_ndarray(buf)
 
@@ -56,7 +68,7 @@ if _lzma:
                 filters=self.filters,
             )
 
-        def decode(self, buf, out=None):
+        def decode(self, buf: Buffer, out: Buffer | None = None) -> Buffer:
             # normalise inputs
             buf = ensure_contiguous_ndarray(buf)
             if out is not None:
@@ -68,5 +80,5 @@ if _lzma:
             # handle destination
             return ndarray_copy(dec, out)
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f'{type(self).__name__}(format={self.format!r}, check={self.check!r}, preset={self.preset!r}, filters={self.filters!r})'

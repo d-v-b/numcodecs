@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 try:
-    from numcodecs.lz4 import LZ4
+    from numcodecs.lz4 import LZ4  # type: ignore[import-untyped]
 except ImportError:  # pragma: no cover
     pytest.skip("numcodecs.lz4 not available", allow_module_level=True)
 

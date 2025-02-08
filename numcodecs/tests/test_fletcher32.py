@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from numcodecs.fletcher32 import Fletcher32
+from numcodecs.fletcher32 import Fletcher32  # type: ignore[import-untyped]
 
 
 @pytest.mark.parametrize("dtype", ["uint8", "int32", "float32"])
@@ -46,7 +46,7 @@ def test_known() -> None:
         551,
         -2118,
     ]
-    assert outarr.tolist() == expected
+    assert outarr.tolist() == expected  # type: ignore[comparison-overlap]
 
 
 def test_out() -> None:

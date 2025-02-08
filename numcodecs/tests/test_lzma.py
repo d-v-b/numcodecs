@@ -59,7 +59,7 @@ def test_encode_decode() -> None:
 
 
 def test_config() -> None:
-    codec = LZMA(preset=1, format=_lzma.FORMAT_XZ, check=_lzma.CHECK_NONE, filters=None)
+    codec = LZMA(preset=1, format=_lzma.FORMAT_XZ, check=_lzma.CHECK_NONE, filters=None)  # type: ignore[union-attr]
     check_config(codec)
 
 
@@ -83,7 +83,7 @@ def test_err_encode_list() -> None:
     data = ['foo', 'bar', 'baz']
     for codec in codecs:
         with pytest.raises(TypeError):
-            codec.encode(data)
+            codec.encode(data)  # type: ignore[arg-type]
 
 
 def test_err_encode_non_contiguous() -> None:

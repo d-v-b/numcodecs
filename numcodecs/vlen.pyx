@@ -33,7 +33,7 @@ cdef Py_ssize_t HEADER_LENGTH = 4
 
 
 def check_out_param(out, n_items):
-    if not isinstance(out, np.ndarray):
+    if not isinstance(out, np.ndarray[Any, np.dtype[Any]]):
         raise TypeError('out must be 1-dimensional array')
     if out.dtype != object:
         raise ValueError('out must be object array')

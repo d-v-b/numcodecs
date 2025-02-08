@@ -4,7 +4,7 @@ import array
 import json as _json
 import os
 from glob import glob
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -14,7 +14,7 @@ import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from numcodecs import *  # noqa: F403  # for eval to find names in repr tests
-from numcodecs.abc import Codec
+from numcodecs.abc import Codec, SupportsPartialDecode
 from numcodecs.compat import ensure_bytes, ensure_ndarray
 from numcodecs.registry import get_codec
 
@@ -34,10 +34,14 @@ greetings = [
 ]
 
 
-def compare_arrays(arr: np.ndarray, res: np.ndarray, precision: int | None = None) -> None:
+def compare_arrays(
+    arr: np.ndarray[Any, np.dtype[Any]],
+    res: np.ndarray[Any, np.dtype[Any]],
+    precision: int | None = None,
+) -> None:
     # ensure numpy array with matching dtype
     res = ensure_ndarray(res).view(arr.dtype)
-
+    order: Literal['A', 'C', 'F']
     # convert to correct shape
     if arr.flags.f_contiguous:
         order = 'F'
@@ -54,7 +58,9 @@ def compare_arrays(arr: np.ndarray, res: np.ndarray, precision: int | None = Non
         assert_array_almost_equal(arr, res, decimal=precision)
 
 
-def check_encode_decode(arr: np.ndarray, codec: Codec, precision: int | None = None) -> None:
+def check_encode_decode(
+    arr: np.ndarray[Any, np.dtype[Any]], codec: Codec, precision: int | None = None
+) -> None:
     # N.B., watch out here with blosc compressor, if the itemsize of
     # the source buffer is different then the results of encoding
     # (i.e., compression) may be different. Hence we *do not* require that
@@ -67,25 +73,25 @@ def check_encode_decode(arr: np.ndarray, codec: Codec, precision: int | None = N
     # test encoding of numpy array
     enc = codec.encode(arr)
     dec = codec.decode(enc)
-    compare_arrays(arr, dec, precision=precision)
+    compare_arrays(arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test encoding of bytes
     buf = arr.tobytes(order='A')
     enc = codec.encode(buf)
     dec = codec.decode(enc)
-    compare_arrays(arr, dec, precision=precision)
+    compare_arrays(arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test encoding of bytearray
     buf = bytearray(arr.tobytes(order='A'))
     enc = codec.encode(buf)
     dec = codec.decode(enc)
-    compare_arrays(arr, dec, precision=precision)
+    compare_arrays(arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test encoding of array.array
-    buf = array.array('b', arr.tobytes(order='A'))
+    buf = array.array('b', arr.tobytes(order='A'))  # type: ignore[assignment]
     enc = codec.encode(buf)
     dec = codec.decode(enc)
-    compare_arrays(arr, dec, precision=precision)
+    compare_arrays(arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # decoding should support any object exporting the buffer protocol,
 
@@ -94,21 +100,21 @@ def check_encode_decode(arr: np.ndarray, codec: Codec, precision: int | None = N
 
     # test decoding of raw bytes
     dec = codec.decode(enc_bytes)
-    compare_arrays(arr, dec, precision=precision)
+    compare_arrays(arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test decoding of bytearray
     dec = codec.decode(bytearray(enc_bytes))
-    compare_arrays(arr, dec, precision=precision)
+    compare_arrays(arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test decoding of array.array
-    buf = array.array('b', enc_bytes)
+    buf = array.array('b', enc_bytes)  # type: ignore[assignment]
     dec = codec.decode(buf)
-    compare_arrays(arr, dec, precision=precision)
+    compare_arrays(arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test decoding of numpy array
-    buf = np.frombuffer(enc_bytes, dtype='u1')
+    buf = np.frombuffer(enc_bytes, dtype='u1')  # type: ignore[assignment]
     dec = codec.decode(buf)
-    compare_arrays(arr, dec, precision=precision)
+    compare_arrays(arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test decoding directly into numpy array
     out = np.empty_like(arr)
@@ -116,14 +122,14 @@ def check_encode_decode(arr: np.ndarray, codec: Codec, precision: int | None = N
     compare_arrays(arr, out, precision=precision)
 
     # test decoding directly into bytearray
-    out = bytearray(arr.nbytes)
+    out = bytearray(arr.nbytes)  # type: ignore[assignment]
     codec.decode(enc_bytes, out=out)
     # noinspection PyTypeChecker
     compare_arrays(arr, out, precision=precision)
 
 
 def check_encode_decode_partial(
-    arr: np.ndarray, codec: Codec, precision: int | None = None
+    arr: np.ndarray[Any, np.dtype[Any]], codec: SupportsPartialDecode, precision: int | None = None
 ) -> None:
     # N.B., watch out here with blosc compressor, if the itemsize of
     # the source buffer is different then the results of encoding
@@ -138,7 +144,7 @@ def check_encode_decode_partial(
     # test encoding of numpy array
     enc = codec.encode(arr)
     dec = codec.decode_partial(enc, start, nitems)
-    compare_arrays(compare_arr, dec, precision=precision)
+    compare_arrays(compare_arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # out = np.empty_like(compare_arr)
     out = np.empty_like(compare_arr)
@@ -148,19 +154,19 @@ def check_encode_decode_partial(
     buf = arr.tobytes(order='A')
     enc = codec.encode(buf)
     dec = codec.decode_partial(enc, start * itemsize, nitems * itemsize, out=out)
-    compare_arrays(compare_arr, dec, precision=precision)
+    compare_arrays(compare_arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test partial decode of encoded bytearray
     buf = bytearray(arr.tobytes(order='A'))
     enc = codec.encode(buf)
     dec = codec.decode_partial(enc, start * itemsize, nitems * itemsize, out=out)
-    compare_arrays(compare_arr, dec, precision=precision)
+    compare_arrays(compare_arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test partial decode of encoded array.array
-    buf = array.array('b', arr.tobytes(order='A'))
+    buf = array.array('b', arr.tobytes(order='A'))  # type: ignore[assignment]
     enc = codec.encode(buf)
     dec = codec.decode_partial(enc, start * itemsize, nitems * itemsize, out=out)
-    compare_arrays(compare_arr, dec, precision=precision)
+    compare_arrays(compare_arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # # decoding should support any object exporting the buffer protocol,
 
@@ -169,30 +175,32 @@ def check_encode_decode_partial(
 
     # test decoding of raw bytes into numpy array
     dec = codec.decode_partial(enc_bytes, start * itemsize, nitems * itemsize, out=out)
-    compare_arrays(compare_arr, dec, precision=precision)
+    compare_arrays(compare_arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test partial decoding of bytearray
     dec = codec.decode_partial(bytearray(enc_bytes), start * itemsize, nitems * itemsize, out=out)
-    compare_arrays(compare_arr, dec, precision=precision)
+    compare_arrays(compare_arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test partial decoding of array.array
-    buf = array.array('b', enc_bytes)
+    buf = array.array('b', enc_bytes)  # type: ignore[assignment]
     dec = codec.decode_partial(buf, start * itemsize, nitems * itemsize, out=out)
-    compare_arrays(compare_arr, dec, precision=precision)
+    compare_arrays(compare_arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test decoding of numpy array into numpy array
-    buf = np.frombuffer(enc_bytes, dtype='u1')
+    buf = np.frombuffer(enc_bytes, dtype='u1')  # type: ignore[assignment]
     dec = codec.decode_partial(buf, start * itemsize, nitems * itemsize, out=out)
-    compare_arrays(compare_arr, dec, precision=precision)
+    compare_arrays(compare_arr, dec, precision=precision)  # type: ignore[arg-type]
 
     # test decoding directly into bytearray
-    out = bytearray(compare_arr.nbytes)
+    out = bytearray(compare_arr.nbytes)  # type: ignore[assignment]
     codec.decode_partial(enc_bytes, start * itemsize, nitems * itemsize, out=out)
     # noinspection PyTypeChecker
     compare_arrays(compare_arr, out, precision=precision)
 
 
-def assert_array_items_equal(res: np.ndarray, arr: np.ndarray) -> None:
+def assert_array_items_equal(
+    res: np.ndarray[Any, np.dtype[Any]], arr: np.ndarray[Any, np.dtype[Any]]
+) -> None:
     assert isinstance(res, np.ndarray)
     res = res.reshape(-1, order='A')
     arr = arr.reshape(-1, order='A')
@@ -202,21 +210,21 @@ def assert_array_items_equal(res: np.ndarray, arr: np.ndarray) -> None:
     # numpy asserts don't compare object arrays
     # properly; assert that we have the same nans
     # and values
-    arr = arr.ravel().tolist()
-    res = res.ravel().tolist()
-    for a, r in zip(arr, res, strict=True):
-        if isinstance(a, np.ndarray):
-            assert_array_equal(a, r)
+    arr_list = arr.ravel().tolist()
+    res_list = res.ravel().tolist()
+    for a, r in zip(arr_list, res_list, strict=True):
+        if isinstance(a, np.ndarray):  # type: ignore[unreachable]
+            assert_array_equal(a, r)  # type: ignore[unreachable]
         elif a != a:
             assert r != r
         else:
             assert a == r
 
 
-def check_encode_decode_array(arr: np.ndarray, codec: Codec) -> None:
+def check_encode_decode_array(arr: np.ndarray[Any, np.dtype[Any]], codec: Codec) -> None:
     enc = codec.encode(arr)
     dec = codec.decode(enc)
-    assert_array_items_equal(arr, dec)
+    assert_array_items_equal(arr, dec)  # type: ignore[arg-type]
 
     out = np.empty_like(arr)
     codec.decode(enc, out=out)
@@ -224,13 +232,13 @@ def check_encode_decode_array(arr: np.ndarray, codec: Codec) -> None:
 
     enc = codec.encode(arr)
     dec = codec.decode(ensure_ndarray(enc))
-    assert_array_items_equal(arr, dec)
+    assert_array_items_equal(arr, dec)  # type: ignore[arg-type]
 
 
-def check_encode_decode_array_to_bytes(arr: np.ndarray, codec: Codec) -> None:
+def check_encode_decode_array_to_bytes(arr: np.ndarray[Any, np.dtype[Any]], codec: Codec) -> None:
     enc = codec.encode(arr)
     dec = codec.decode(enc)
-    assert_array_items_equal(arr, dec)
+    assert_array_items_equal(arr, dec)  # type: ignore[arg-type]
 
     out = np.empty_like(arr)
     codec.decode(enc, out=out)
@@ -253,7 +261,7 @@ def check_repr(stmt: str) -> None:
 
 def check_backwards_compatibility(
     codec_id: str,
-    arrays: Sequence[np.ndarray],
+    arrays: Sequence[np.ndarray[Any, np.dtype[Any]]],
     codecs: Sequence[Codec],
     precision: Sequence[int | None] | None = None,
     prefix: str | None = None,
@@ -266,6 +274,8 @@ def check_backwards_compatibility(
     if not os.path.exists(fixture_dir):  # pragma: no cover
         os.makedirs(fixture_dir)
 
+    arr: np.ndarray[Any, np.dtype[Any]]
+    order: Literal['A', 'C', 'F']
     # save fixture data
     for i, arr in enumerate(arrays):
         arr_fn = os.path.join(fixture_dir, f'array.{i:02d}.npy')
@@ -277,7 +287,9 @@ def check_backwards_compatibility(
         # setup
         i = int(arr_fn.split('.')[-2])
         arr = np.load(arr_fn, allow_pickle=True)
+
         arr_bytes = arr.tobytes(order='A')
+
         if arr.flags.f_contiguous:
             order = 'F'
         else:
@@ -318,8 +330,8 @@ def check_backwards_compatibility(
                 dec = codec.decode(enc)
                 dec_arr = ensure_ndarray(dec).reshape(-1, order='A')
                 dec_arr = dec_arr.view(dtype=arr.dtype).reshape(arr.shape, order=order)
-                if precision and precision[j] is not None:
-                    assert_array_almost_equal(arr, dec_arr, decimal=precision[j])
+                if precision is not None and precision[j] is not None:
+                    assert_array_almost_equal(arr, dec_arr, decimal=float(precision[j]))  # type: ignore[arg-type]
                 elif arr.dtype == 'object':
                     assert_array_items_equal(arr, dec_arr)
                 else:
@@ -361,8 +373,8 @@ def check_max_buffer_size(codec: Codec) -> None:
             ]
             for buf in buffers:
                 with pytest.raises(ValueError):
-                    codec.encode(buf)
+                    codec.encode(buf)  # type: ignore[arg-type]
                 with pytest.raises(ValueError):
-                    codec.decode(buf)
+                    codec.decode(buf)  # type: ignore[arg-type]
         finally:
             codec.max_buffer_size = old_max_buffer_size

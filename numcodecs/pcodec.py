@@ -1,8 +1,16 @@
-from typing import Literal
+from typing import ClassVar, Literal
+
+from typing_extensions import Buffer
 
 from numcodecs.abc import Codec
 from numcodecs.compat import ensure_contiguous_ndarray
-from pcodec import ChunkConfig, DeltaSpec, ModeSpec, PagingSpec, standalone
+from pcodec import (  # type: ignore[import-not-found]
+    ChunkConfig,
+    DeltaSpec,
+    ModeSpec,
+    PagingSpec,
+    standalone,
+)
 
 DEFAULT_MAX_PAGE_N = 262144
 
@@ -41,7 +49,12 @@ class PCodec(Codec):
         Divide the chunk into equal pages of up to this many numbers.
     """
 
-    codec_id = "pcodec"
+    codec_id: ClassVar[Literal['pcodec']] = "pcodec"
+    level: int
+    mode_spec: Literal["auto", "classic"]
+    delta_spec: Literal["auto", "none", "try_consecutive", "try_lookback"]
+    delate_encoding_order: int | None
+    equal_pages_up_to: int
 
     def __init__(
         self,
@@ -62,7 +75,7 @@ class PCodec(Codec):
         self.delta_encoding_order = delta_encoding_order
         self.equal_pages_up_to = equal_pages_up_to
 
-    def _get_chunk_config(self):
+    def _get_chunk_config(self) -> ChunkConfig:
         match self.mode_spec:
             case "auto":
                 mode_spec = ModeSpec.auto()
@@ -104,12 +117,12 @@ class PCodec(Codec):
             paging_spec=paging_spec,
         )
 
-    def encode(self, buf):
+    def encode(self, buf: Buffer) -> Buffer:
         buf = ensure_contiguous_ndarray(buf)
         config = self._get_chunk_config()
         return standalone.simple_compress(buf, config)
 
-    def decode(self, buf, out=None):
+    def decode(self, buf: Buffer, out: Buffer | None = None) -> Buffer:
         if out is not None:
             out = ensure_contiguous_ndarray(out)
             standalone.simple_decompress_into(buf, out)

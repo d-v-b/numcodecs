@@ -3,16 +3,17 @@ applications to dynamically register and look-up codec classes."""
 
 import logging
 from importlib.metadata import EntryPoints, entry_points
+from typing import cast
 
-from numcodecs.abc import Codec
+from numcodecs.abc import Codec, ConfigDict
 from numcodecs.errors import UnknownCodecError
 
 logger = logging.getLogger("numcodecs")
-codec_registry: dict[str, Codec] = {}
+codec_registry: dict[str, type[Codec]] = {}
 entries: dict[str, EntryPoints] = {}
 
 
-def run_entrypoints():
+def run_entrypoints() -> None:
     entries.clear()
     eps = entry_points()
     entries.update({e.name: e for e in eps.select(group="numcodecs.codecs")})
@@ -21,7 +22,7 @@ def run_entrypoints():
 run_entrypoints()
 
 
-def get_codec(config):
+def get_codec(config: ConfigDict) -> Codec:
     """Obtain a codec for the given configuration.
 
     Parameters
@@ -42,7 +43,7 @@ def get_codec(config):
     Zlib(level=1)
 
     """
-    config = dict(config)
+    config = cast(dict[str, object], dict(config))
     codec_id = config.pop('id', None)
     cls = codec_registry.get(codec_id)
     if cls is None and codec_id in entries:
@@ -54,7 +55,7 @@ def get_codec(config):
     raise UnknownCodecError(f"{codec_id!r}")
 
 
-def register_codec(cls, codec_id=None):
+def register_codec(cls: type[Codec], codec_id: str | None = None) -> None:
     """Register a codec class.
 
     Parameters
