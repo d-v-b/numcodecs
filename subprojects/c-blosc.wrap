@@ -1,0 +1,15 @@
+[wrap-file]
+# c-blosc 1.x is not in WrapDB, so this wrap is maintained here. It pins the
+# c-blosc commit numcodecs was previously pinned to as a git submodule (main
+# after v1.21.6, needed for gcc 15). Switch to a release tarball once c-blosc
+# tags a release that includes it.
+directory = c-blosc-04c06fb7339d3df3600b1862077b8699b30a0e1d
+source_url = https://github.com/Blosc/c-blosc/archive/04c06fb7339d3df3600b1862077b8699b30a0e1d.tar.gz
+source_filename = c-blosc-04c06fb7339d3df3600b1862077b8699b30a0e1d.tar.gz
+source_hash = 22c1d0fa6500f319db9a9da5e9344e3a2f26de98e3beadf25f96dd3c71a271f3
+# meson.build/meson.options for c-blosc (upstream only ships CMake), plus
+# numcodecs-specific sources such as the NEON shuffle.
+patch_directory = c-blosc
+
+[provide]
+blosc = blosc_dep
