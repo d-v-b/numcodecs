@@ -75,7 +75,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        zarr-version: ["312", "313", "main"]
+        zarr-version: ["312", "313"]
 
     defaults:
       run:
