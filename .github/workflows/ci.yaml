@@ -51,7 +51,11 @@ jobs:
 
       - name: Install numcodecs
         run: |
-          export DISABLE_NUMCODECS_AVX2=""
+          # On this branch setup.py adds -mno-avx2 whenever this variable is set, and
+          # recent clang rejects that flag on arm64, so only set it on x86_64.
+          if [[ "$(uname -m)" == "x86_64" ]]; then
+            export DISABLE_NUMCODECS_AVX2=""
+          fi
           python -m pip install -v -e .[test,test_extras,msgpack,crc32c,pcodec,zfpy]
 
       - name: Deduplicate LC_RPATH entries
