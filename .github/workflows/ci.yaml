@@ -37,10 +37,6 @@ jobs:
       - name: Install compilers
         run: conda install -y c-compiler cxx-compiler
 
-      - name: Install clang
-        if: matrix.platform == 'macos-15-large'
-        run: conda install -y 'clang>=12.0.1,<17'
-
       - name: Show conda environment info
         run: |
           conda info
