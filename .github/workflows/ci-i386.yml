@@ -62,12 +62,9 @@ jobs:
       - name: Install numcodecs
         run: |
           export DISABLE_NUMCODECS_AVX2=""
-          # TODO: Remove this conditional when pcodec supports Python 3.14
-          if [[ "${{ matrix.python-version }}" == "3.14" ]]; then
-            uv pip install -v -e .[test,test_extras,msgpack,google_crc32c,crc32c,zfpy]
-          else
-            uv pip install -v -e .[test,test_extras,msgpack,google_crc32c,crc32c,pcodec,zfpy]
-          fi
+          # pcodec is left out: it has no i386 wheel, and its source build
+          # produces a wheel tagged x86_64 that cannot be installed here.
+          uv pip install -v -e .[test,test_extras,msgpack,google_crc32c,crc32c,zfpy]
         shell: alpine.sh {0}
 
       - name: List installed packages
