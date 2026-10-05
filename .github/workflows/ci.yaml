@@ -37,9 +37,11 @@ jobs:
       - name: Install compilers
         run: conda install -y c-compiler cxx-compiler
 
-      - name: Install clang
-        if: matrix.platform == 'macos-15-large'
-        run: conda install -y 'clang>=12.0.1,<17'
+      - name: Install GCC 14
+        # GCC 15 defaults to C23, where `bool` is a keyword, and the c-blosc
+        # version bundled on this branch still defines `bool` with a typedef.
+        if: runner.os == 'Linux'
+        run: conda install -y 'gcc<15' 'gxx<15'
 
       - name: Show conda environment info
         run: |
