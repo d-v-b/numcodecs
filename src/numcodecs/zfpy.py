@@ -1,17 +1,24 @@
 import warnings
 from contextlib import suppress
 from importlib.metadata import PackageNotFoundError, version
+from itertools import takewhile
 from types import ModuleType
 
 _zfpy: ModuleType | None = None
 
+
+def _release_version(version_string: str) -> tuple[int, ...]:
+    """Return the leading numeric components of a version, e.g. 1.0.1.post0 -> (1, 0, 1)."""
+    return tuple(map(int, takewhile(str.isdigit, version_string.split("."))))
+
+
 _zfpy_version: tuple = ()
 with suppress(PackageNotFoundError):
-    _zfpy_version = tuple(map(int, version("zfpy").split(".")))
+    _zfpy_version = _release_version(version("zfpy"))
 
 if _zfpy_version:
     # Check NumPy version
-    _numpy_version: tuple = tuple(map(int, version("numpy").split('.')))
+    _numpy_version: tuple = _release_version(version("numpy"))
     if _numpy_version >= (2, 0, 0) and _zfpy_version < (1, 0, 1):  # pragma: no cover
         _zfpy_version = ()
         warnings.warn(

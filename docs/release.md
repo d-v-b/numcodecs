@@ -14,6 +14,12 @@
 
 ## Unreleased
 
+### Fixes
+
+* Fix `import numcodecs` raising `ValueError` when the installed zfpy or NumPy version has
+  a non-numeric component, such as zfpy `1.0.1.post0`.
+  By {user}`Davis Bennett <d-v-b>`.
+
 ### Enhancements
 
 * Blosc byte-shuffle and unshuffle now use NEON SIMD on aarch64 (Apple Silicon, AWS
