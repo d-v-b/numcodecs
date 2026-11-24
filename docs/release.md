@@ -29,9 +29,14 @@
   wheels) rather than every branch, test the oldest supported and latest Zarr
   releases, use Alpine's numpy in the i386 job, and remove the unused release-notes
   labeler.
+* Check the behavior every codec promises through `numcodecs.abc.Codec` in a new
+  `tests/test_codec_contract.py`, and add strict static type tests in `tests/typing`, run by
+  mypy and pyright in a new `typing` CI job.
 
 ### Fixes
 
+* `Fletcher32.decode` raises `ValueError` when `out` is not exactly the size of the
+  decoded data.
 * `import numcodecs` no longer fails when a zfpy post-release such as 1.0.1.post0 is
   installed. zfpy versions are now parsed with `packaging`, which becomes a dependency,
   and the `zfpy` extra now requires zfpy >= 1.0.1. {issue}`892`
